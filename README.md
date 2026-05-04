@@ -105,6 +105,8 @@ Expected current result:
 
 - `netlify/functions/scheduler-dispatcher.ts` runs every 10 minutes and queues due work.
 - `netlify/functions/execute-commit-background.ts` claims one planned commit and writes it through the GitHub Contents API.
+- `/api/setup/status` exposes redacted production readiness so the public site shows missing configuration instead of failing silently.
+- `/setup` includes the 24/7 activation sequence for Netlify Database, GitHub App URLs, secrets, and the scheduled worker path.
 
 ## Safety Positioning
 

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { getSetupStatus } from "@/server/setup/status";
 
 const platformSignals = [
@@ -36,7 +37,8 @@ export default function HomePage() {
   const setup = getSetupStatus();
 
   return (
-    <main className="min-h-screen bg-surface">
+    <main className="relative isolate min-h-screen overflow-hidden bg-surface">
+      <ActivityBackdrop />
       <header className="sticky top-0 z-20 border-b border-border bg-surface/88 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
@@ -56,7 +58,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.86fr_1.14fr]">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.86fr_1.14fr]">
         <div className="max-w-2xl">
           <StatusStrip ready={setup.canStartGitHubAuth} missing={setup.missing.length} />
           <h1 className="mt-6 text-5xl font-semibold leading-tight text-primary md:text-7xl">
@@ -93,7 +95,7 @@ export default function HomePage() {
         <ConsolePreview />
       </section>
 
-      <section id="platform" className="border-y border-border bg-surface-muted/70">
+      <section id="platform" className="relative z-10 border-y border-border bg-surface-muted/70">
         <div className="mx-auto grid max-w-7xl gap-3 px-5 py-5 md:grid-cols-4">
           {platformSignals.map(({ label, value, icon: Icon }) => (
             <div key={label} className="rounded-lg border border-border bg-surface-raised p-4">
@@ -108,7 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="workflow" className="mx-auto grid max-w-7xl gap-5 px-5 py-12 lg:grid-cols-[0.9fr_1.1fr]">
+      <section id="workflow" className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 py-12 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <Badge tone="accent" className="mb-4">Workflow</Badge>
           <h2 className="text-3xl font-semibold text-primary md:text-4xl">Built like an ops surface, not a toy bot.</h2>
@@ -127,7 +129,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="trust" className="mx-auto max-w-7xl px-5 pb-12">
+      <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
         <div className="rounded-lg border border-border bg-surface-raised p-5 md:flex md:items-center md:justify-between">
           <div>
             <Badge tone="success" className="mb-4">Transparent automation</Badge>

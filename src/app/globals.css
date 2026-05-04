@@ -81,6 +81,119 @@ body {
   letter-spacing: 0;
 }
 
+.activity-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.78;
+}
+
+.activity-backdrop::before,
+.activity-backdrop::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+}
+
+.activity-backdrop::before {
+  background:
+    linear-gradient(90deg, var(--color-surface) 0%, transparent 18%, transparent 72%, var(--color-surface) 100%),
+    linear-gradient(180deg, var(--color-surface) 0%, transparent 24%, var(--color-surface) 100%);
+}
+
+.activity-backdrop::after {
+  background:
+    linear-gradient(90deg, transparent 0%, oklch(70% 0.14 150 / 0.08) 50%, transparent 100%);
+  transform: translateX(-80%);
+  animation: activitySweep 8s linear infinite;
+}
+
+.activity-backdrop-grid {
+  position: absolute;
+  top: -8%;
+  right: -6%;
+  z-index: 1;
+  display: grid;
+  width: min(980px, 92vw);
+  grid-template-columns: repeat(20, minmax(12px, 1fr));
+  gap: 6px;
+  transform: rotate(-8deg);
+}
+
+.activity-backdrop-console {
+  opacity: 0.42;
+}
+
+.activity-backdrop-console .activity-backdrop-grid {
+  top: -4%;
+  right: -12%;
+  width: min(740px, 108vw);
+  grid-template-columns: repeat(18, minmax(10px, 1fr));
+  gap: 5px;
+}
+
+.activity-tile {
+  aspect-ratio: 1;
+  border: 1px solid oklch(70% 0.12 150 / 0.18);
+  border-radius: 4px;
+  background: oklch(22% 0.018 150 / 0.6);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.05);
+  animation: activityPulse var(--activity-duration) ease-in-out infinite;
+  animation-delay: var(--activity-delay);
+}
+
+.activity-tile-0 {
+  opacity: 0.28;
+}
+
+.activity-tile-1 {
+  background: oklch(33% 0.07 150 / 0.72);
+  opacity: 0.46;
+}
+
+.activity-tile-2 {
+  background: oklch(43% 0.11 150 / 0.78);
+  opacity: 0.62;
+}
+
+.activity-tile-3 {
+  background: oklch(56% 0.15 150 / 0.84);
+  opacity: 0.76;
+}
+
+.activity-tile-4 {
+  background: oklch(70% 0.18 150 / 0.9);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.18),
+    0 0 22px oklch(70% 0.18 150 / 0.2);
+  opacity: 0.9;
+}
+
+@keyframes activityPulse {
+  0%,
+  100% {
+    filter: saturate(0.92);
+    transform: translateY(0);
+  }
+  46% {
+    filter: saturate(1.25);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes activitySweep {
+  0% {
+    transform: translateX(-80%);
+  }
+  58%,
+  100% {
+    transform: translateX(80%);
+  }
+}
+
 .technical-grid {
   background:
     linear-gradient(90deg, oklch(65% 0.03 240 / 0.08) 1px, transparent 1px),

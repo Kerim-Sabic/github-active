@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
+import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { getSetupStatus, type SetupCheck } from "@/server/setup/status";
 
 type SetupPageProps = {
@@ -44,8 +45,9 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
   const groups = groupChecks(status.checks);
 
   return (
-    <main className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-surface/90 backdrop-blur">
+    <main className="relative isolate min-h-screen overflow-hidden bg-surface">
+      <ActivityBackdrop density="console" />
+      <header className="relative z-20 border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
             <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface-raised">
@@ -59,7 +61,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-[0.82fr_1.18fr]">
+      <section className="relative z-10 mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="content-start">
           <Badge tone={status.ready ? "success" : "warning"} className="mb-5">
             {status.ready ? "Production ready" : "Setup incomplete"}
@@ -146,7 +148,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
         </Card>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 pb-10">
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-10">
         <Card className="shadow-none">
           <CardHeader title="GitHub App Settings" eyebrow="Required live configuration" action={<KeyRound aria-hidden="true" className="h-5 w-5 text-tertiary" />} />
           <div className="grid gap-3 font-mono text-sm text-secondary md:grid-cols-2">
@@ -155,6 +157,34 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
             <div className="rounded-md border border-border bg-surface p-3">Repository permissions: Contents read/write</div>
             <div className="rounded-md border border-border bg-surface p-3">Repository permissions: Metadata read</div>
           </div>
+        </Card>
+      </section>
+
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
+        <Card className="shadow-none">
+          <CardHeader title="24/7 Activation Sequence" eyebrow="Netlify production" action={<ServerCog aria-hidden="true" className="h-5 w-5 text-tertiary" />} />
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ["1", "Create Netlify Database", "Attach Postgres, then apply drizzle/0000_initial.sql."],
+              ["2", "Configure GitHub App", "Use the callback/setup URLs above and grant Contents read/write."],
+              ["3", "Set secrets", "Add every missing env var in Netlify production and redeploy."]
+            ].map(([step, title, copy]) => (
+              <div key={step} className="rounded-lg border border-border bg-surface p-4">
+                <span className="grid h-8 w-8 place-items-center rounded-md border border-border bg-surface-raised font-mono text-sm text-accent">{step}</span>
+                <h2 className="mt-4 text-base font-semibold text-primary">{title}</h2>
+                <p className="mt-2 text-sm leading-6 text-secondary">{copy}</p>
+              </div>
+            ))}
+          </div>
+          <pre className="mt-4 overflow-auto rounded-md border border-border bg-surface p-4 font-mono text-xs leading-6 text-secondary">{`APP_URL=https://githubactive.netlify.app
+NETLIFY_DATABASE_URL=postgres://...
+GITHUB_APP_SLUG=github-active
+GITHUB_APP_ID=...
+GITHUB_APP_CLIENT_ID=...
+GITHUB_APP_CLIENT_SECRET=...
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\\n...\\n-----END RSA PRIVATE KEY-----"
+SESSION_SECRET=32+ random chars
+INTERNAL_JOB_SECRET=16+ random chars`}</pre>
         </Card>
       </section>
     </main>
