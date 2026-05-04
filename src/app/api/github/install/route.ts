@@ -1,20 +1,32 @@
-import { randomBytes } from "node:crypto";
-import { buildOAuthStateCookie } from "@/server/auth/session";
-import { requireEnv, serverEnv } from "@/server/env";
+import {
+  buildGitHubInstallUrl,
+  buildGitHubStateCookie,
+  createGitHubFlowState
+} from "@/server/auth/github-flow";
+import { serverEnv } from "@/server/env";
+import { buildSetupUrl, getSetupStatus } from "@/server/setup/status";
 
 export const runtime = "nodejs";
 
 export async function GET(): Promise<Response> {
-  const slug = requireEnv(serverEnv.GITHUB_APP_SLUG, "GITHUB_APP_SLUG");
-  const state = randomBytes(24).toString("base64url");
-  const url = new URL(`https://github.com/apps/${slug}/installations/new`);
-  url.searchParams.set("state", state);
+  const setup = getSetupStatus();
+  if (!setup.canStartGitHubAuth || !serverEnv.GITHUB_APP_SLUG) {
+    return Response.redirect(
+      buildSetupUrl({
+        reason: "github_app_not_configured",
+        from: "github-install",
+        missing: setup.missing
+      }),
+      302
+    );
+  }
 
+  const state = createGitHubFlowState({ kind: "install" });
   return new Response(null, {
     status: 302,
     headers: {
-      Location: url.toString(),
-      "Set-Cookie": buildOAuthStateCookie(state)
+      Location: buildGitHubInstallUrl(serverEnv.GITHUB_APP_SLUG, state),
+      "Set-Cookie": buildGitHubStateCookie(state)
     }
   });
 }

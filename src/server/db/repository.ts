@@ -95,7 +95,8 @@ export async function getDashboardData(userId: string | null): Promise<Dashboard
       id: run.id,
       status: run.status,
       message: run.githubSha ? `Committed ${run.githubSha.slice(0, 7)}` : run.error ?? "Queued job",
-      createdAt: run.startedAt.toISOString()
+      createdAt: run.startedAt.toISOString(),
+      githubUrl: run.githubUrl
     }))
   };
 }

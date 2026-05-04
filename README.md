@@ -62,8 +62,20 @@ GitHub App setup:
 
 - Enable user authorization during installation.
 - Callback URL: `https://your-site.netlify.app/api/github/callback`
+- Setup URL: `https://your-site.netlify.app/api/github/callback`
 - Repository permissions: `Contents: Read and write`, `Metadata: Read`.
 - Users should select only repositories they own or intentionally want automated.
+
+Production checklist for `https://githubactive.netlify.app`:
+
+- Set the Netlify environment variables above in the production context.
+- Apply `drizzle/0000_initial.sql` to the Netlify Database/Postgres connection.
+- Create or update one GitHub App for GitHub Active.
+- Set the GitHub App Callback URL to `https://githubactive.netlify.app/api/github/callback`.
+- Set the GitHub App Setup URL to `https://githubactive.netlify.app/api/github/callback`.
+- Enable the install OAuth flow or let the app redirect through `/api/github/login` after installation.
+- Confirm `https://githubactive.netlify.app/api/setup/status` reports all required checks as configured before sharing the public link.
+- If `/api/github/install` cannot start safely, users are redirected to `/setup` instead of receiving a blank server error.
 
 ## Database
 

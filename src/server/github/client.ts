@@ -44,7 +44,7 @@ const CreateFileResponseSchema = z.object({
 export type GitHubUser = z.infer<typeof GitHubUserSchema>;
 export type GitHubRepository = z.infer<typeof GitHubRepositorySchema>;
 
-export async function exchangeCodeForUserToken(code: string): Promise<string> {
+export async function exchangeCodeForUserToken(code: string, redirectUri?: string): Promise<string> {
   const clientId = requireEnv(serverEnv.GITHUB_APP_CLIENT_ID, "GITHUB_APP_CLIENT_ID");
   const clientSecret = requireEnv(serverEnv.GITHUB_APP_CLIENT_SECRET, "GITHUB_APP_CLIENT_SECRET");
   const response = await fetch("https://github.com/login/oauth/access_token", {
@@ -56,7 +56,8 @@ export async function exchangeCodeForUserToken(code: string): Promise<string> {
     body: JSON.stringify({
       client_id: clientId,
       client_secret: clientSecret,
-      code
+      code,
+      ...(redirectUri ? { redirect_uri: redirectUri } : {})
     })
   });
 
@@ -87,6 +88,15 @@ export async function listInstallationRepositories(installationToken: string): P
   const result = await requestGitHub(
     "https://api.github.com/installation/repositories?per_page=100",
     installationToken,
+    InstallationRepositoriesSchema
+  );
+  return result.repositories;
+}
+
+export async function listUserInstallationRepositories(userToken: string, installationId: number): Promise<GitHubRepository[]> {
+  const result = await requestGitHub(
+    `https://api.github.com/user/installations/${installationId}/repositories?per_page=100`,
+    userToken,
     InstallationRepositoriesSchema
   );
   return result.repositories;

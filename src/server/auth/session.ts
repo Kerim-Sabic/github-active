@@ -21,8 +21,7 @@ export function createSessionToken(userId: string): string {
     issuedAt: now,
     expiresAt: now + 60 * 60 * 24 * 30
   };
-  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  return `${encoded}.${sign(encoded)}`;
+  return createSignedToken(payload);
 }
 
 export async function getSessionUserId(): Promise<string | null> {
@@ -33,15 +32,29 @@ export async function getSessionUserId(): Promise<string | null> {
 }
 
 export function readSessionToken(token: string): SessionPayload | null {
+  const parsed = readSignedToken(token, SessionPayloadSchema);
+  if (!parsed) return null;
+  if (parsed.expiresAt < Math.floor(Date.now() / 1000)) return null;
+  return parsed;
+}
+
+export function createSignedToken(payload: unknown): string {
+  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  return `${encoded}.${sign(encoded)}`;
+}
+
+export function readSignedToken<T>(token: string, schema: z.ZodType<T>): T | null {
   const [encoded, signature] = token.split(".");
   if (!encoded || !signature) return null;
   if (!isValidSignature(encoded, signature)) return null;
 
-  const raw: unknown = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
-  const parsed = SessionPayloadSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  if (parsed.data.expiresAt < Math.floor(Date.now() / 1000)) return null;
-  return parsed.data;
+  try {
+    const raw: unknown = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    const parsed = schema.safeParse(raw);
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 export function buildSessionCookie(token: string): string {

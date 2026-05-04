@@ -4,131 +4,143 @@ import {
   ArrowRight,
   CalendarClock,
   CheckCircle2,
-  Database,
   Github,
   GitPullRequest,
   LockKeyhole,
+  Play,
+  SquareTerminal,
   ServerCog,
   ShieldCheck,
-  Sparkles,
-  TimerReset
+  TimerReset,
+  Zap
 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { getSetupStatus } from "@/server/setup/status";
 
-const productSignals = [
-  { label: "Netlify scheduled dispatcher", value: "10 min", icon: CalendarClock },
-  { label: "Background commit worker", value: "15 min max", icon: ServerCog },
-  { label: "GitHub App token lifetime", value: "1 hour", icon: LockKeyhole },
-  { label: "Idempotency guard", value: "unique", icon: ShieldCheck }
+const platformSignals = [
+  { label: "Scheduled dispatcher", value: "10m", icon: CalendarClock },
+  { label: "Background worker", value: "15m", icon: ServerCog },
+  { label: "Install token TTL", value: "1h", icon: LockKeyhole },
+  { label: "Retry guard", value: "unique", icon: ShieldCheck }
 ];
 
-const features = [
+const productPoints = [
   "GitHub App installation with selected repository access",
-  "Preview every generated journal entry before execution",
-  "Seeded scheduling so planned and executed content match",
-  "Audit events, job runs, retry-safe commit planning"
+  "Deterministic previews before background workers write",
+  "Audit trail for schedules, runs, failures, and commit links",
+  "Netlify-hosted jobs that keep running after this device is off"
 ];
 
 export default function HomePage() {
+  const setup = getSetupStatus();
+
   return (
-    <main className="min-h-screen">
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
-          <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface-raised">
-            <Activity aria-hidden="true" className="h-5 w-5 text-accent" />
-          </span>
-          <span className="text-base font-semibold text-primary">GitHub Active</span>
-        </Link>
-        <nav className="hidden items-center gap-6 text-sm text-secondary md:flex" aria-label="Primary navigation">
-          <a href="#platform">Platform</a>
-          <a href="#design">Design</a>
-          <a href="#pricing">Pricing</a>
-        </nav>
-        <Button asChild size="sm" variant="secondary">
-          <Link href="/dashboard">Open demo</Link>
-        </Button>
+    <main className="min-h-screen bg-surface">
+      <header className="sticky top-0 z-20 border-b border-border bg-surface/88 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+          <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
+            <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface-raised">
+              <Activity aria-hidden="true" className="h-5 w-5 text-accent" />
+            </span>
+            <span className="text-sm font-semibold text-primary">GitHub Active</span>
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm text-secondary md:flex" aria-label="Primary navigation">
+            <a href="#platform" className="hover:text-primary">Platform</a>
+            <a href="#workflow" className="hover:text-primary">Workflow</a>
+            <a href="#trust" className="hover:text-primary">Trust</a>
+          </nav>
+          <Button asChild size="sm" variant="secondary">
+            <Link href="/dashboard">Open console</Link>
+          </Button>
+        </div>
       </header>
 
-      <section className="mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-7xl items-center gap-12 px-6 py-8 lg:grid-cols-[0.88fr_1.12fr]">
+      <section className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.86fr_1.14fr]">
         <div className="max-w-2xl">
-          <Badge tone="accent" className="mb-5">
-            Netlify-native public SaaS
-          </Badge>
-          <h1 className="text-[clamp(2.1rem,5vw,4.4rem)] font-semibold leading-[1.05] text-primary">
-            Developer journal automation that runs after your laptop is off.
+          <StatusStrip ready={setup.canStartGitHubAuth} missing={setup.missing.length} />
+          <h1 className="mt-6 text-5xl font-semibold leading-tight text-primary md:text-7xl">
+            GitHub Active
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-7 text-secondary">
-            GitHub Active turns this local GitHub activity bot into a transparent, multi-user web app:
-            GitHub App access, scheduled Netlify workers, deterministic previews, and a dashboard built
-            for trust.
+          <p className="mt-5 max-w-xl text-lg leading-8 text-secondary">
+            A public Netlify command center for transparent developer journal automation on user-owned GitHub repositories.
+            Users install a GitHub App, preview the work, and let scheduled workers run continuously.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/api/github/install">
+              <a href="/api/github/install">
                 <Github aria-hidden="true" className="h-5 w-5" />
                 Connect GitHub
-              </Link>
+              </a>
             </Button>
             <Button asChild size="lg" variant="secondary">
               <Link href="/dashboard">
-                View product demo
+                View console
                 <ArrowRight aria-hidden="true" className="h-5 w-5" />
               </Link>
             </Button>
           </div>
           <div className="mt-8 grid gap-3 text-sm text-secondary sm:grid-cols-2">
-            {features.map((feature) => (
-              <div key={feature} className="flex items-start gap-2">
+            {productPoints.map((point) => (
+              <div key={point} className="flex items-start gap-2">
                 <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                <span>{feature}</span>
+                <span>{point}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <DashboardPreview />
+        <ConsolePreview />
       </section>
 
-      <section id="platform" className="border-y border-border bg-surface-muted/60">
-        <div className="mx-auto grid max-w-7xl gap-4 px-6 py-8 md:grid-cols-4">
-          {productSignals.map(({ label, value, icon: Icon }) => (
+      <section id="platform" className="border-y border-border bg-surface-muted/70">
+        <div className="mx-auto grid max-w-7xl gap-3 px-5 py-5 md:grid-cols-4">
+          {platformSignals.map(({ label, value, icon: Icon }) => (
             <div key={label} className="rounded-lg border border-border bg-surface-raised p-4">
-              <Icon aria-hidden="true" className="mb-4 h-5 w-5 text-accent" />
-              <p className="font-mono text-xl text-primary">{value}</p>
+              <div className="mb-4 flex items-center justify-between">
+                <Icon aria-hidden="true" className="h-5 w-5 text-accent" />
+                <span className="h-2 w-2 rounded-full bg-success" />
+              </div>
+              <p className="font-mono text-2xl text-primary">{value}</p>
               <p className="mt-1 text-sm text-secondary">{label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="design" className="mx-auto grid max-w-7xl gap-6 px-6 py-16 lg:grid-cols-3">
-        {[
-          ["Explicit control", "Users choose repositories, verified author identity, intensity, tracks, and quiet hours."],
-          ["Technical surface", "Every run has idempotency, job status, generated content, and GitHub commit links."],
-          ["Clean product feel", "Dense dashboard layout, real controls, restrained color, and predictable mobile behavior."]
-        ].map(([title, copy]) => (
-          <article key={title} className="rounded-lg border border-border bg-surface-raised p-6">
-            <h2 className="text-xl font-semibold text-primary">{title}</h2>
-            <p className="mt-3 leading-7 text-secondary">{copy}</p>
-          </article>
-        ))}
+      <section id="workflow" className="mx-auto grid max-w-7xl gap-5 px-5 py-12 lg:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <Badge tone="accent" className="mb-4">Workflow</Badge>
+          <h2 className="text-3xl font-semibold text-primary md:text-4xl">Built like an ops surface, not a toy bot.</h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {[
+            ["Install", "Users grant selected repository access through a GitHub App."],
+            ["Preview", "The next file path, message, and content are visible before execution."],
+            ["Run", "Netlify queues idempotent work and records the resulting commit."]
+          ].map(([title, copy]) => (
+            <article key={title} className="rounded-lg border border-border bg-surface-raised p-5">
+              <h3 className="text-lg font-semibold text-primary">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-secondary">{copy}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-7xl px-6 pb-16">
-        <div className="rounded-lg border border-border bg-surface-raised p-6 md:flex md:items-center md:justify-between">
+      <section id="trust" className="mx-auto max-w-7xl px-5 pb-12">
+        <div className="rounded-lg border border-border bg-surface-raised p-5 md:flex md:items-center md:justify-between">
           <div>
-            <Badge tone="success" className="mb-4">
-              Launch-ready shape
-            </Badge>
-            <h2 className="text-2xl font-semibold text-primary">Start open, add paid automation limits later.</h2>
+            <Badge tone="success" className="mb-4">Transparent automation</Badge>
+            <h2 className="text-2xl font-semibold text-primary">No PATs, no hidden remotes, no deceptive backdating.</h2>
             <p className="mt-2 max-w-2xl text-secondary">
-              The code now has the product seams for public onboarding, repo selection, schedules, workers,
-              and audit history.
+              GitHub Active writes explicit developer journal content into repositories users choose and can inspect.
             </p>
           </div>
           <Button asChild className="mt-5 md:mt-0">
-            <Link href="/dashboard">Review dashboard</Link>
+            <a href="/api/github/install">
+              <Github aria-hidden="true" className="h-4 w-4" />
+              Connect GitHub
+            </a>
           </Button>
         </div>
       </section>
@@ -136,54 +148,68 @@ export default function HomePage() {
   );
 }
 
-function DashboardPreview() {
-  const days = Array.from({ length: 49 }, (_, index) => index);
+function StatusStrip({ ready, missing }: { ready: boolean; missing: number }) {
+  return (
+    <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-raised p-2 shadow-soft">
+      <Badge tone={ready ? "success" : "warning"}>{ready ? "Live auth ready" : `${missing} setup items`}</Badge>
+      <span className="font-mono text-xs text-tertiary">githubactive.netlify.app</span>
+    </div>
+  );
+}
+
+function ConsolePreview() {
+  const days = Array.from({ length: 84 }, (_, index) => index);
 
   return (
-    <div className="relative">
-      <div className="rounded-lg border border-border bg-surface-raised p-4 shadow-soft">
-        <div className="flex items-center justify-between border-b border-border pb-4">
+    <div className="rounded-lg border border-border bg-surface-raised p-3 shadow-panel">
+      <div className="technical-grid scanline rounded-md border border-border bg-surface-inset p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-md bg-accent-muted">
-              <GitPullRequest aria-hidden="true" className="h-5 w-5 text-accent" />
-            </div>
+            <span className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface-raised">
+              <SquareTerminal aria-hidden="true" className="h-5 w-5 text-accent" />
+            </span>
             <div>
-              <p className="text-sm font-medium text-primary">octocat/dev-journal</p>
-              <p className="font-mono text-xs text-tertiary">next run in 37m</p>
+              <p className="text-sm font-semibold text-primary">activity-control-plane</p>
+              <p className="font-mono text-xs text-tertiary">installation: selected repositories</p>
             </div>
           </div>
-          <Badge tone="success">Active</Badge>
+          <Badge tone="success">Operational</Badge>
         </div>
 
-        <div className="grid gap-4 py-4 md:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <p className="mb-3 text-sm font-medium text-secondary">Activity plan</p>
+        <div className="grid gap-4 py-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-medium text-secondary">Activity heatmap</span>
+              <span className="font-mono text-xs text-success">next run 37m</span>
+            </div>
             <div className="grid grid-cols-7 gap-2">
               {days.map((day) => (
-                <div
+                <span
                   key={day}
-                  className="h-8 rounded-md border border-border"
+                  className="h-7 rounded-md border border-border"
                   style={{
                     background:
-                      day % 9 === 0
-                        ? "var(--color-success-muted)"
-                        : day % 5 === 0
-                          ? "var(--color-accent-muted)"
+                      day % 13 === 0
+                        ? "var(--color-accent-muted)"
+                        : day % 4 === 0 || day % 7 === 0
+                          ? "var(--color-success-muted)"
                           : "var(--color-surface-muted)"
                   }}
                 />
               ))}
             </div>
           </div>
+
           <div className="grid gap-3">
             {[
-              ["scheduler-dispatcher", "due scan"],
-              ["execute-commit-background", "queued"],
-              ["contents API", "ready"]
-            ].map(([name, status]) => (
-              <div key={name} className="flex items-center justify-between rounded-md border border-border bg-surface p-3">
+              { name: "scheduler-dispatcher", status: "due scan", icon: CalendarClock },
+              { name: "execute-commit-background", status: "accepted", icon: Play },
+              { name: "contents api", status: "write-ready", icon: GitPullRequest },
+              { name: "idempotency", status: "locked", icon: ShieldCheck }
+            ].map(({ name, status, icon: Icon }) => (
+              <div key={name} className="flex items-center justify-between rounded-md border border-border bg-surface-raised/88 p-3">
                 <div className="flex items-center gap-2">
-                  <Database aria-hidden="true" className="h-4 w-4 text-accent" />
+                  <Icon aria-hidden="true" className="h-4 w-4 text-accent" />
                   <span className="font-mono text-xs text-secondary">{name}</span>
                 </div>
                 <span className="text-xs text-success">{status}</span>
@@ -192,21 +218,43 @@ function DashboardPreview() {
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-secondary">
-            <Sparkles aria-hidden="true" className="h-4 w-4 text-accent" />
-            Preview content
+        <div className="grid gap-4 md:grid-cols-[0.92fr_1.08fr]">
+          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm text-secondary">
+              <TimerReset aria-hidden="true" className="h-4 w-4 text-accent" />
+              Schedule envelope
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <Metric label="Timezone" value="Europe/Warsaw" />
+              <Metric label="Intensity" value="steady" />
+              <Metric label="Catch-up" value="limited" />
+              <Metric label="Tracks" value="3 active" />
+            </div>
           </div>
-          <pre className="overflow-hidden text-ellipsis whitespace-pre-wrap font-mono text-xs leading-6 text-secondary">{`## 2026-05-04 - Token Rotation
-- Mapped retry-safe GitHub App installation tokens.
-- Added one idempotency key per due commit.
-- Kept author identity explicit and user-owned.`}</pre>
+
+          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm text-secondary">
+              <Zap aria-hidden="true" className="h-4 w-4 text-accent" />
+              Commit preview
+            </div>
+            <pre className="max-h-40 overflow-hidden whitespace-pre-wrap font-mono text-xs leading-6 text-secondary">{`docs/journal/2026-05-04-token-rotation.md
+
+## Token Rotation
+- Mapped GitHub App installation token boundaries.
+- Added retry-safe commit idempotency keys.
+- Verified author identity remains explicit.`}</pre>
+          </div>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-3 text-sm text-tertiary">
-        <TimerReset aria-hidden="true" className="h-4 w-4" />
-        Runs from Netlify, not this device.
-      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-surface p-3">
+      <p className="font-mono text-xs text-tertiary">{label}</p>
+      <p className="mt-1 text-sm font-medium text-primary">{value}</p>
     </div>
   );
 }

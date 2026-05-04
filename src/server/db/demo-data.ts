@@ -27,6 +27,7 @@ export type DashboardData = {
     status: string;
     message: string;
     createdAt: string;
+    githubUrl: string | null;
   }>;
 };
 
@@ -91,13 +92,15 @@ export function getDemoDashboardData(): DashboardData {
         id: "demo-run-1",
         status: "completed",
         message: preview.message,
-        createdAt: DateTime.now().minus({ hours: 3 }).toISO() ?? new Date().toISOString()
+        createdAt: DateTime.now().minus({ hours: 3 }).toISO() ?? new Date().toISOString(),
+        githubUrl: null
       },
       {
         id: "demo-run-2",
         status: "queued",
         message: "Next transparent journal commit is scheduled",
-        createdAt: nextRun.dueAt.toISOString()
+        createdAt: nextRun.dueAt.toISOString(),
+        githubUrl: null
       }
     ]
   };
