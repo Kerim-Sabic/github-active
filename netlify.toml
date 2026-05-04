@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["drizzle/**"]
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions."scheduler-dispatcher"]
+  schedule = "*/10 * * * *"
