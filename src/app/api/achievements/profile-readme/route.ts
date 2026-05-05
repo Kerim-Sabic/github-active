@@ -1,4 +1,5 @@
 import { createProfileReadme } from "@/server/github/profile-readme";
+import { formatApiError } from "@/server/http/api-errors";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Profile README update failed." },
+      { error: formatApiError(error, "Profile README update failed.") },
       {
         status: 400,
         headers: {

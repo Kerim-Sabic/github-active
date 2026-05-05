@@ -1,4 +1,5 @@
 import { validateManualToken } from "@/server/github/manual-token";
+import { formatApiError } from "@/server/http/api-errors";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Manual token validation failed." },
+      { error: formatApiError(error, "Manual token validation failed.") },
       {
         status: 400,
         headers: {
