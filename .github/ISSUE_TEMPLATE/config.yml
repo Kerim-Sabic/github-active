@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Live setup status
+    url: https://githubactive.netlify.app/api/setup/status
+    about: Check whether the hosted app has production credentials configured.
+  - name: GitHub profile docs
+    url: https://docs.github.com/en/account-and-profile/tutorials/personalize-your-profile
+    about: Official GitHub documentation for profile customization.

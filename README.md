@@ -1,32 +1,89 @@
 # GitHub Active
 
-GitHub Active is a polished Netlify SaaS for transparent developer journal automation on user-owned GitHub repositories. Users install a GitHub App, preview generated technical content, configure schedules, and let Netlify run the work even when their device is off.
+> A Netlify-native command center for transparent developer journal automation on user-owned GitHub repositories.
 
-![GitHub Active](https://img.shields.io/badge/GitHub%20Active-Netlify%20SaaS-00A6C8?style=for-the-badge)
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge)
-![License](https://img.shields.io/badge/License-BSD%203--Clause-green?style=for-the-badge)
+[![Live](https://img.shields.io/badge/live-githubactive.netlify.app-23C55E?style=for-the-badge)](https://githubactive.netlify.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
+[![Netlify](https://img.shields.io/badge/Netlify-Scheduled%20Workers-00AD9F?style=for-the-badge&logo=netlify)](https://www.netlify.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-22C55E?style=for-the-badge)](./LICENSE)
 
-## Highlights
+GitHub Active turns a local activity bot into a public SaaS surface with GitHub App auth, deterministic commit previews, retry-safe scheduled workers, audit history, and a technical dashboard that makes automation explicit instead of hidden.
 
-- Public landing page with a clean, technical product feel.
-- Dashboard-first app experience with repo health, previews, schedules, run-now controls, and audit history.
-- GitHub App authentication instead of personal access tokens.
-- Netlify Scheduled Function dispatcher plus background commit worker.
-- Drizzle/Postgres schema for users, installations, repositories, schedules, planned commits, job runs, and audit events.
-- Deterministic scheduler and content generator so previewed content matches executed jobs.
-- Zero production npm audit vulnerabilities at the time of publishing.
+It is designed for developer journaling, learning logs, and transparent repository activity in repos the user owns or intentionally selects. It does **not** support hidden backdating, fake achievement farming, synthetic stars, spam pull requests, or deceptive contribution claims.
+
+## Product Surface
+
+- **Public app:** minimal technical landing page with animated GitHub-style activity tiles.
+- **Dashboard:** repository health, schedule controls, previews, run-now, pause/resume, and recent jobs.
+- **Setup console:** redacted production readiness for GitHub App, Netlify Database, session secrets, and worker secrets.
+- **Manual mode:** one-time fine-grained token validation for fallback troubleshooting, without storing tokens.
+- **Achievement Lab:** ethical profile-growth roadmap for real GitHub signals: docs, CI, pull requests, reviews, profile README, and visible achievements.
+
+## Architecture
+
+```text
+Next.js App Router
+  -> GitHub App install / OAuth callback
+  -> Drizzle ORM / Netlify Database
+  -> Netlify Scheduled Function dispatcher
+  -> Netlify Background Function commit worker
+  -> GitHub Contents API
+```
+
+Core properties:
+
+- GitHub App installation tokens are generated on demand and never exposed to the browser.
+- Planned commits use deterministic seeds so previews match execution.
+- Worker execution is idempotent through unique planned-commit keys.
+- Setup status is redacted and safe to expose publicly.
+- Manual token mode validates credentials once and does not persist PATs.
+
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the system model.
 
 ## Stack
 
-- Next.js App Router
-- React 19
-- Tailwind CSS v4 with OKLCH design tokens
-- Radix Slot primitives
-- Lucide icons
-- Zod validation
-- Drizzle ORM
-- Netlify Functions
-- Netlify Database / Postgres
+| Layer | Choice |
+| --- | --- |
+| App | Next.js App Router, React 19 |
+| Styling | Tailwind CSS v4, OKLCH tokens, lucide icons |
+| Validation | Zod schemas at API and domain boundaries |
+| Persistence | Drizzle ORM on Netlify Database / Postgres |
+| Jobs | Netlify Scheduled Functions and Background Functions |
+| Auth | GitHub App installation auth plus OAuth user authorization |
+| Tests | Vitest for scheduler, config, auth flow, setup status, policy logic |
+
+## Production Setup
+
+GitHub Active needs real production credentials before `Connect GitHub` can redirect to GitHub. If these are missing, the live app intentionally redirects to `/setup` instead of returning a blank 500.
+
+```env
+APP_URL=https://githubactive.netlify.app
+SESSION_SECRET=replace_with_at_least_32_random_characters
+INTERNAL_JOB_SECRET=replace_with_at_least_16_random_characters
+NETLIFY_DATABASE_URL=postgres_connection_string
+
+GITHUB_APP_SLUG=your-github-app-slug
+GITHUB_APP_ID=123456
+GITHUB_APP_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
+GITHUB_APP_CLIENT_SECRET=github_app_client_secret
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+```
+
+GitHub App settings:
+
+- Callback URL: `https://githubactive.netlify.app/api/github/callback`
+- Setup URL: `https://githubactive.netlify.app/api/github/callback`
+- Repository permissions: `Contents: Read and write`, `Metadata: Read`
+- User authorization: enabled
+
+Apply the schema:
+
+```bash
+psql "$NETLIFY_DATABASE_URL" -f drizzle/0000_initial.sql
+```
+
+Full checklist: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md).
 
 ## Local Development
 
@@ -41,49 +98,7 @@ Open:
 http://localhost:3000
 ```
 
-Without database and GitHub App environment variables, the app renders demo dashboard data so the interface can be reviewed safely.
-
-## Production Environment
-
-```env
-APP_URL=https://your-site.netlify.app
-SESSION_SECRET=replace_with_at_least_32_random_characters
-INTERNAL_JOB_SECRET=replace_with_at_least_16_random_characters
-NETLIFY_DATABASE_URL=postgres_connection_string
-
-GITHUB_APP_SLUG=your-github-app-slug
-GITHUB_APP_ID=123456
-GITHUB_APP_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
-GITHUB_APP_CLIENT_SECRET=github_app_client_secret
-GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
-```
-
-GitHub App setup:
-
-- Enable user authorization during installation.
-- Callback URL: `https://your-site.netlify.app/api/github/callback`
-- Setup URL: `https://your-site.netlify.app/api/github/callback`
-- Repository permissions: `Contents: Read and write`, `Metadata: Read`.
-- Users should select only repositories they own or intentionally want automated.
-
-Production checklist for `https://githubactive.netlify.app`:
-
-- Set the Netlify environment variables above in the production context.
-- Apply `drizzle/0000_initial.sql` to the Netlify Database/Postgres connection.
-- Create or update one GitHub App for GitHub Active.
-- Set the GitHub App Callback URL to `https://githubactive.netlify.app/api/github/callback`.
-- Set the GitHub App Setup URL to `https://githubactive.netlify.app/api/github/callback`.
-- Enable the install OAuth flow or let the app redirect through `/api/github/login` after installation.
-- Confirm `https://githubactive.netlify.app/api/setup/status` reports all required checks as configured before sharing the public link.
-- If `/api/github/install` cannot start safely, users are redirected to `/setup` instead of receiving a blank server error.
-
-## Database
-
-The Drizzle ORM schema lives in `src/server/db/schema.ts`. Apply the initial SQL migration with:
-
-```bash
-psql "$NETLIFY_DATABASE_URL" -f drizzle/0000_initial.sql
-```
+Without database and GitHub App env vars, the app renders demo dashboard data and setup guidance.
 
 ## Verification
 
@@ -97,23 +112,28 @@ npm audit
 Expected current result:
 
 - TypeScript passes.
-- 7 Vitest checks pass.
+- Vitest passes.
 - Next.js production build passes.
-- npm audit reports 0 vulnerabilities.
+- npm audit reports no moderate-or-higher vulnerabilities.
 
-## Netlify Functions
+## Repository Quality
 
-- `netlify/functions/scheduler-dispatcher.ts` runs every 10 minutes and queues due work.
-- `netlify/functions/execute-commit-background.ts` claims one planned commit and writes it through the GitHub Contents API.
-- `/api/setup/status` exposes redacted production readiness so the public site shows missing configuration instead of failing silently.
-- `/setup` includes the 24/7 activation sequence for Netlify Database, GitHub App URLs, secrets, and the scheduled worker path.
+This repo includes:
+
+- CI workflow for typecheck, tests, build, and audit.
+- Issue templates for bugs and feature requests.
+- Pull request template with validation checklist.
+- Security policy and contribution guide.
+- Architecture, deployment, manual mode, and Achievement Lab documentation.
 
 ## Safety Positioning
 
-GitHub Active is designed for transparent developer journaling and user-owned repositories. It does not support hidden backdating or deceptive contribution claims. Users explicitly select repositories, preview generated content, configure schedules, and keep audit records.
+GitHub Active is for transparent developer journaling and user-owned repositories. Users explicitly select repositories, preview generated content, configure schedules, and keep audit records.
+
+Achievement Lab is an ethical roadmap for profile quality. It helps users understand legitimate profile signals and visibility settings; it does not automate badge manipulation or spam behavior.
 
 ## License
 
-Licensed under the BSD 3-Clause License.
+Licensed under the [BSD 3-Clause License](./LICENSE).
 
 Copyright notices and attribution to `Kerim-Sabic` must be preserved in redistributions, forks, and substantial portions of the software.

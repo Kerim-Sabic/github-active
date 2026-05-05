@@ -50,6 +50,8 @@ export default function HomePage() {
           <nav className="hidden items-center gap-6 text-sm text-secondary md:flex" aria-label="Primary navigation">
             <a href="#platform" className="hover:text-primary">Platform</a>
             <a href="#workflow" className="hover:text-primary">Workflow</a>
+            <a href="/achievements" className="hover:text-primary">Achievement Lab</a>
+            <a href="/manual" className="hover:text-primary">Manual mode</a>
             <a href="#trust" className="hover:text-primary">Trust</a>
           </nav>
           <Button asChild size="sm" variant="secondary">
@@ -80,6 +82,9 @@ export default function HomePage() {
                 View console
                 <ArrowRight aria-hidden="true" className="h-5 w-5" />
               </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary">
+              <a href="/achievements">Achievement Lab</a>
             </Button>
           </div>
           <div className="mt-8 grid gap-3 text-sm text-secondary sm:grid-cols-2">
@@ -126,6 +131,27 @@ export default function HomePage() {
               <p className="mt-3 text-sm leading-6 text-secondary">{copy}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
+        <div className="grid gap-5 rounded-lg border border-border bg-surface-raised p-5 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <Badge tone="success" className="mb-4">Profile growth</Badge>
+            <h2 className="text-2xl font-semibold text-primary">Achievement Lab without fake achievement farming.</h2>
+            <p className="mt-2 text-secondary">
+              Guide users toward real profile signals: clean repositories, strong docs, useful pull requests,
+              visible achievements, and transparent contribution settings.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {["Profile README", "Repository hygiene", "Collaboration quality"].map((item) => (
+              <div key={item} className="rounded-md border border-border bg-surface p-4">
+                <CheckCircle2 aria-hidden="true" className="mb-3 h-5 w-5 text-success" />
+                <p className="text-sm font-medium text-primary">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

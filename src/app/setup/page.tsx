@@ -98,6 +98,12 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </a>
             </Button>
+            <Button asChild variant="secondary">
+              <a href="/manual">
+                Manual mode
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
         </div>
 
