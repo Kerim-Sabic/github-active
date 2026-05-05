@@ -15,6 +15,7 @@ import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
+import { AchievementLabClient } from "./achievement-lab-client";
 
 const achievementTracks = [
   {
@@ -92,7 +93,8 @@ export default function AchievementsPage() {
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-secondary">
             Achievement Lab helps users understand GitHub profile signals, badges, repository hygiene,
-            and collaboration habits. It does not fake stars, script spam, or claim work that did not happen.
+            and collaboration habits. The first working action creates a real profile README commit in your
+            username/username repository. It does not fake stars, script spam, or claim work that did not happen.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button asChild>
@@ -109,9 +111,13 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        <Card className="shadow-panel">
+        <AchievementLabClient />
+      </section>
+
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
+        <Card className="shadow-none">
           <CardHeader title="Achievement Operating Model" eyebrow="Transparent roadmap" action={<Sparkles aria-hidden="true" className="h-5 w-5 text-tertiary" />} />
-          <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {roadmap.map(([step, title, copy]) => (
               <div key={step} className="grid gap-3 rounded-lg border border-border bg-surface p-4 md:grid-cols-[56px_1fr]">
                 <span className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface-raised font-mono text-sm text-accent">{step}</span>

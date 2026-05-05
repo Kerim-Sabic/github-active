@@ -10,6 +10,7 @@ Achievement Lab is a legitimate profile-growth planner. It helps users improve t
 - Repository hygiene: CI, license, security policy, contribution guide, architecture docs.
 - Visibility settings for achievements and private contributions.
 - Transparent developer journal entries in user-owned repositories.
+- A real profile README commit into the user's `username/username` repository.
 
 ## What It Will Not Do
 

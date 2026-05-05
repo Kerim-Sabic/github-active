@@ -26,6 +26,27 @@ describe("setup status", () => {
     expect(status.checks.every((check) => typeof check.configured === "boolean")).toBe(true);
   });
 
+  it("treats Supabase helper keys as optional database checks", () => {
+    const status = getSetupStatus(completeEnv);
+
+    expect(status.ready).toBe(true);
+    expect(status.supabaseReady).toBe(false);
+    expect(status.missing).not.toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(status.missing).not.toContain("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  });
+
+  it("accepts a direct Supabase Postgres URL for the required database", () => {
+    const status = getSetupStatus({
+      ...completeEnv,
+      NETLIFY_DATABASE_URL: undefined,
+      SUPABASE_DATABASE_URL: "postgres://user:pass@db.example.supabase.co:5432/postgres"
+    });
+
+    expect(status.ready).toBe(true);
+    expect(status.databaseReady).toBe(true);
+    expect(status.missing).not.toContain("NETLIFY_DATABASE_URL");
+  });
+
   it("reports exact missing deployment keys", () => {
     const status = getSetupStatus({
       ...completeEnv,

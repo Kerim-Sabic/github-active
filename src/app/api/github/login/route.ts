@@ -7,7 +7,7 @@ import {
   readPendingInstallation
 } from "@/server/auth/github-flow";
 import { serverEnv } from "@/server/env";
-import { buildSetupUrl, getSetupStatus } from "@/server/setup/status";
+import { buildConnectUrl, getSetupStatus } from "@/server/setup/status";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,7 @@ export async function GET(): Promise<Response> {
   const setup = getSetupStatus();
   if (!setup.canStartGitHubAuth || !serverEnv.GITHUB_APP_CLIENT_ID) {
     return Response.redirect(
-      buildSetupUrl({
+      buildConnectUrl({
         reason: "github_oauth_not_configured",
         from: "github-login",
         missing: setup.missing

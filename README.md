@@ -17,8 +17,9 @@ It is designed for developer journaling, learning logs, and transparent reposito
 - **Public app:** minimal technical landing page with animated GitHub-style activity tiles.
 - **Dashboard:** repository health, schedule controls, previews, run-now, pause/resume, and recent jobs.
 - **Setup console:** redacted production readiness for GitHub App, Netlify Database, session secrets, and worker secrets.
-- **Manual mode:** one-time fine-grained token validation for fallback troubleshooting, without storing tokens.
-- **Achievement Lab:** ethical profile-growth roadmap for real GitHub signals: docs, CI, pull requests, reviews, profile README, and visible achievements.
+- **Connect screen:** clear Automatic mode vs Manual mode instead of a raw production-credentials error.
+- **Manual mode:** fine-grained token validation and one transparent journal commit, without storing tokens.
+- **Achievement Lab:** ethical profile-growth roadmap plus a working profile README updater for real GitHub profile improvement.
 
 ## Architecture
 
@@ -62,6 +63,9 @@ APP_URL=https://githubactive.netlify.app
 SESSION_SECRET=replace_with_at_least_32_random_characters
 INTERNAL_JOB_SECRET=replace_with_at_least_16_random_characters
 NETLIFY_DATABASE_URL=postgres_connection_string
+SUPABASE_DATABASE_URL=optional_supabase_postgres_connection_string
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_replace_me
 
 GITHUB_APP_SLUG=your-github-app-slug
 GITHUB_APP_ID=123456
@@ -130,7 +134,7 @@ This repo includes:
 
 GitHub Active is for transparent developer journaling and user-owned repositories. Users explicitly select repositories, preview generated content, configure schedules, and keep audit records.
 
-Achievement Lab is an ethical roadmap for profile quality. It helps users understand legitimate profile signals and visibility settings; it does not automate badge manipulation or spam behavior.
+Achievement Lab is an ethical roadmap for profile quality. It can create a real profile README commit in the user's own `username/username` repository and helps users understand legitimate profile signals and visibility settings; it does not automate badge manipulation or spam behavior.
 
 ## License
 

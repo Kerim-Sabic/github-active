@@ -87,9 +87,9 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button asChild>
-              <a href="/api/github/install">
+              <a href="/connect">
                 <Github aria-hidden="true" className="h-4 w-4" />
-                Retry GitHub connect
+                Choose connect mode
               </a>
             </Button>
             <Button asChild variant="secondary">
@@ -116,7 +116,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
           <div className="grid gap-4">
             {groups.map(([group, checks]) => {
               const Icon = groupIcon[group];
-              const complete = checks.every((check) => check.configured);
+              const complete = checks.filter((check) => check.required).every((check) => check.configured);
               return (
                 <section key={group} className="rounded-lg border border-border bg-surface p-4">
                   <div className="mb-4 flex items-center justify-between gap-3">
@@ -142,7 +142,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
                           ) : (
                             <AlertTriangle aria-hidden="true" className="h-4 w-4 text-warning" />
                           )}
-                          {check.configured ? "Configured" : "Required"}
+                          {check.configured ? "Configured" : check.required ? "Required" : "Optional"}
                         </span>
                       </div>
                     ))}
@@ -184,6 +184,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
           </div>
           <pre className="mt-4 overflow-auto rounded-md border border-border bg-surface p-4 font-mono text-xs leading-6 text-secondary">{`APP_URL=https://githubactive.netlify.app
 NETLIFY_DATABASE_URL=postgres://...
+SUPABASE_DATABASE_URL=postgres://... # optional alternative
 GITHUB_APP_SLUG=github-active
 GITHUB_APP_ID=...
 GITHUB_APP_CLIENT_ID=...

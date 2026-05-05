@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Copy, Github, KeyRound, LockKeyhole, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, GitCommit, KeyRound, LockKeyhole, XCircle } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
@@ -11,6 +11,7 @@ type ManualValidation = {
   login: string;
   profileUrl: string;
   avatarUrl: string | null;
+  noReplyEmail: string;
   usernameMatches: boolean | null;
   repositories: Array<{
     fullName: string;
@@ -25,10 +26,20 @@ type Status =
   | { kind: "success"; validation: ManualValidation }
   | { kind: "error"; message: string };
 
+type CommitStatus =
+  | { kind: "idle" }
+  | { kind: "success"; message: string; url: string }
+  | { kind: "error"; message: string };
+
 export function ManualModeClient() {
   const [username, setUsername] = useState("");
   const [token, setToken] = useState("");
+  const [selectedRepo, setSelectedRepo] = useState("");
+  const [branch, setBranch] = useState("main");
+  const [authorName, setAuthorName] = useState("");
+  const [authorEmail, setAuthorEmail] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [commitStatus, setCommitStatus] = useState<CommitStatus>({ kind: "idle" });
   const [isPending, startTransition] = useTransition();
 
   function validateToken() {
@@ -42,8 +53,41 @@ export function ManualModeClient() {
         const raw = (await response.json()) as { validation?: ManualValidation; error?: string };
         if (!response.ok || !raw.validation) throw new Error(raw.error ?? "Manual validation failed.");
         setStatus({ kind: "success", validation: raw.validation });
+        setAuthorName(raw.validation.login);
+        setAuthorEmail(raw.validation.noReplyEmail);
+        const writableRepo = raw.validation.repositories.find((repo) => repo.canPush);
+        setSelectedRepo(writableRepo?.fullName ?? raw.validation.repositories[0]?.fullName ?? "");
+        setBranch(writableRepo?.defaultBranch ?? raw.validation.repositories[0]?.defaultBranch ?? "main");
       } catch (error) {
         setStatus({ kind: "error", message: error instanceof Error ? error.message : "Manual validation failed." });
+      }
+    });
+  }
+
+  function createManualCommit() {
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/manual/commit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token,
+            username,
+            repoFullName: selectedRepo,
+            branch,
+            authorName,
+            authorEmail
+          })
+        });
+        const raw = (await response.json()) as { result?: { github: { htmlUrl: string }; commit: { message: string } }; error?: string };
+        if (!response.ok || !raw.result) throw new Error(raw.error ?? "Manual commit failed.");
+        setCommitStatus({
+          kind: "success",
+          message: raw.result.commit.message,
+          url: raw.result.github.htmlUrl
+        });
+      } catch (error) {
+        setCommitStatus({ kind: "error", message: error instanceof Error ? error.message : "Manual commit failed." });
       }
     });
   }
@@ -109,15 +153,63 @@ export function ManualModeClient() {
             </div>
             <div className="grid gap-2">
               {status.validation.repositories.map((repo) => (
-                <div key={repo.fullName} className="grid gap-2 rounded-md border border-border bg-surface p-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+                <button
+                  key={repo.fullName}
+                  className={`grid gap-2 rounded-md border bg-surface p-3 text-left transition-colors md:grid-cols-[1fr_auto_auto] md:items-center ${
+                    selectedRepo === repo.fullName ? "border-accent" : "border-border hover:border-border-strong"
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRepo(repo.fullName);
+                    setBranch(repo.defaultBranch);
+                  }}
+                >
                   <div>
                     <p className="text-sm font-medium text-primary">{repo.fullName}</p>
                     <p className="font-mono text-xs text-tertiary">{repo.defaultBranch}</p>
                   </div>
                   <Badge tone={repo.private ? "warning" : "success"}>{repo.private ? "Private" : "Public"}</Badge>
                   <Badge tone={repo.canPush ? "success" : "danger"}>{repo.canPush ? "Writable" : "Read only"}</Badge>
-                </div>
+                </button>
               ))}
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-primary">
+                <GitCommit aria-hidden="true" className="h-4 w-4 text-accent" />
+                Create one transparent journal commit
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input label="Repository" value={selectedRepo} onChange={(event) => setSelectedRepo(event.target.value)} />
+                <Input label="Branch" value={branch} onChange={(event) => setBranch(event.target.value)} />
+                <Input label="Author name" value={authorName} onChange={(event) => setAuthorName(event.target.value)} />
+                <Input label="Author email" value={authorEmail} onChange={(event) => setAuthorEmail(event.target.value)} />
+              </div>
+              <Button
+                className="mt-4"
+                onClick={createManualCommit}
+                loading={isPending}
+                disabled={!selectedRepo || !branch || !authorName || !authorEmail}
+              >
+                <GitCommit aria-hidden="true" className="h-4 w-4" />
+                Commit journal artifact
+              </Button>
+              {commitStatus.kind === "success" ? (
+                <a
+                  className="mt-4 flex items-center gap-2 rounded-md border border-success-muted bg-success-muted p-3 text-sm text-success"
+                  href={commitStatus.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                  {commitStatus.message}
+                </a>
+              ) : null}
+              {commitStatus.kind === "error" ? (
+                <div className="mt-4 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                  {commitStatus.message}
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

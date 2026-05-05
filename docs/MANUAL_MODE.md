@@ -2,7 +2,7 @@
 
 Manual mode is a fallback for users who cannot configure the GitHub App immediately.
 
-It validates a GitHub fine-grained personal access token once, lists recent repositories, and reports whether the token appears to have write access. The token is not stored by GitHub Active.
+It validates a GitHub fine-grained personal access token once, lists recent repositories, reports whether the token appears to have write access, and can create one transparent journal commit. The token is not stored by GitHub Active.
 
 ## Recommended Token Setup
 
@@ -14,7 +14,8 @@ It validates a GitHub fine-grained personal access token once, lists recent repo
    - `Contents: Read and write`
    - `Metadata: Read`
 5. Paste it into `/manual`.
-6. Rotate or revoke the token after testing.
+6. Select a writable repository and run one journal artifact commit if desired.
+7. Rotate or revoke the token after testing.
 
 ## Why Manual Mode Is Not The Production Default
 

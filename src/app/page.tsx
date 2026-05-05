@@ -72,7 +72,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <a href="/api/github/install">
+              <a href="/connect">
                 <Github aria-hidden="true" className="h-5 w-5" />
                 Connect GitHub
               </a>
@@ -165,7 +165,7 @@ export default function HomePage() {
             </p>
           </div>
           <Button asChild className="mt-5 md:mt-0">
-            <a href="/api/github/install">
+            <a href="/connect">
               <Github aria-hidden="true" className="h-4 w-4" />
               Connect GitHub
             </a>
