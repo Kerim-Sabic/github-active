@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type GeneratedCommit } from "@/server/automation/types";
 import { createOrUpdateRepositoryFile } from "@/server/github/client";
 import { getManualRepositoryAccess, validateManualToken } from "@/server/github/manual-token";
+import { achievementGoalIds, getAchievementGoals, type AchievementGoalId } from "@/shared/achievement-goals";
 
 const ProfileReadmeInputSchema = z.object({
   token: z.string().trim().min(20),
@@ -9,6 +10,7 @@ const ProfileReadmeInputSchema = z.object({
   headline: z.string().trim().min(4).max(140),
   focus: z.string().trim().min(4).max(240),
   projectUrl: z.string().trim().url().optional().or(z.literal("")),
+  goals: z.array(z.enum(achievementGoalIds)).min(1).max(12).default(["profile-readme", "repository-credibility"]),
   authorName: z.string().trim().min(1).max(120).optional(),
   authorEmail: z.string().trim().email().optional()
 });
@@ -42,7 +44,8 @@ export async function createProfileReadme(rawInput: unknown): Promise<ProfileRea
       login: validation.login,
       headline: input.headline,
       focus: input.focus,
-      projectUrl: input.projectUrl || "https://githubactive.netlify.app"
+      projectUrl: input.projectUrl || "https://githubactive.netlify.app",
+      goals: input.goals
     }),
     kind: "journal",
     track: "systems",
@@ -79,7 +82,10 @@ function buildProfileReadme(input: {
   headline: string;
   focus: string;
   projectUrl: string;
+  goals: AchievementGoalId[];
 }): string {
+  const goals = getAchievementGoals(input.goals);
+
   return [
     `# ${input.login}`,
     "",
@@ -94,6 +100,20 @@ function buildProfileReadme(input: {
     "- Building transparent automation tools with explicit audit trails.",
     "- Shipping small, reviewable changes with type checks, tests, and production builds.",
     "- Preferring least-privilege GitHub access and clear operator visibility.",
+    "",
+    "## Selected Achievement Goals",
+    "",
+    ...goals.flatMap((goal) => [
+      `### ${goal.title}`,
+      "",
+      `Signal: ${goal.signal}`,
+      "",
+      "Action plan:",
+      ...goal.actions.map((action) => `- ${action}`),
+      "",
+      `Evidence: ${goal.evidence}`,
+      ""
+    ]),
     "",
     "## Featured Work",
     "",

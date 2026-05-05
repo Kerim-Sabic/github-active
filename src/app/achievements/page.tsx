@@ -8,8 +8,8 @@ import {
   Github,
   HeartHandshake,
   ShieldCheck,
-  Sparkles,
-  Star
+  Star,
+  Target
 } from "lucide-react";
 import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { Badge } from "@/shared/ui/badge";
@@ -89,17 +89,17 @@ export default function AchievementsPage() {
         <div>
           <Badge tone="success" className="mb-5">Legitimate profile growth</Badge>
           <h1 className="max-w-2xl text-4xl font-semibold leading-tight text-primary md:text-6xl">
-            Build a GitHub profile that survives serious review.
+            Choose the GitHub achievements you want to work toward.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-secondary">
-            Achievement Lab helps users understand GitHub profile signals, badges, repository hygiene,
-            and collaboration habits. The first working action creates a real profile README commit in your
-            username/username repository. It does not fake stars, script spam, or claim work that did not happen.
+            Achievement Lab lets users select achievement goals, understand the real work behind each signal,
+            and publish a transparent action plan to their profile README. It does not fake stars, script spam,
+            or claim work that did not happen.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button asChild>
-              <a href="/manual">
-                Manual access
+              <a href="#achievement-planner">
+                Open planner
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </a>
             </Button>
@@ -111,12 +111,14 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        <AchievementLabClient />
+        <div id="achievement-planner">
+          <AchievementLabClient />
+        </div>
       </section>
 
       <section className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
         <Card className="shadow-none">
-          <CardHeader title="Achievement Operating Model" eyebrow="Transparent roadmap" action={<Sparkles aria-hidden="true" className="h-5 w-5 text-tertiary" />} />
+          <CardHeader title="Achievement Operating Model" eyebrow="Transparent roadmap" action={<Target aria-hidden="true" className="h-5 w-5 text-tertiary" />} />
           <div className="grid gap-3 md:grid-cols-2">
             {roadmap.map(([step, title, copy]) => (
               <div key={step} className="grid gap-3 rounded-lg border border-border bg-surface p-4 md:grid-cols-[56px_1fr]">

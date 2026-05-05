@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ExternalLink, Github, KeyRound, Sparkles, XCircle } from "lucide-react";
+import { CheckCircle2, ExternalLink, Github, KeyRound, Sparkles, Target, XCircle } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
+import { achievementGoals, type AchievementGoalId } from "@/shared/achievement-goals";
 
 type ProfileReadmeStatus =
   | { kind: "idle" }
@@ -18,8 +19,14 @@ export function AchievementLabClient() {
   const [headline, setHeadline] = useState("Developer building transparent automation, reliable systems, and polished product interfaces.");
   const [focus, setFocus] = useState("Currently focused on GitHub App authentication, scheduled workers, deterministic previews, and visible engineering audit trails.");
   const [projectUrl, setProjectUrl] = useState("https://githubactive.netlify.app");
+  const [selectedGoalIds, setSelectedGoalIds] = useState<AchievementGoalId[]>([
+    "profile-readme",
+    "repository-credibility",
+    "pull-shark"
+  ]);
   const [status, setStatus] = useState<ProfileReadmeStatus>({ kind: "idle" });
   const [isPending, startTransition] = useTransition();
+  const selectedGoals = achievementGoals.filter((goal) => selectedGoalIds.includes(goal.id));
 
   function updateProfileReadme() {
     startTransition(async () => {
@@ -27,7 +34,7 @@ export function AchievementLabClient() {
         const response = await fetch("/api/achievements/profile-readme", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, token, headline, focus, projectUrl })
+          body: JSON.stringify({ username, token, headline, focus, projectUrl, goals: selectedGoalIds })
         });
         const raw = (await response.json()) as { result?: { htmlUrl: string; login: string }; error?: string };
         if (!response.ok || !raw.result) throw new Error(raw.error ?? "Profile README update failed.");
@@ -38,24 +45,94 @@ export function AchievementLabClient() {
     });
   }
 
+  function toggleGoal(goalId: AchievementGoalId) {
+    setSelectedGoalIds((current) =>
+      current.includes(goalId) ? current.filter((id) => id !== goalId) : [...current, goalId]
+    );
+  }
+
   return (
     <Card className="shadow-panel">
       <CardHeader
-        title="Do A Real Profile Upgrade"
-        eyebrow="Achievement Lab action"
-        action={<Badge tone="success">Writes README.md</Badge>}
+        title="Achievement Goal Planner"
+        eyebrow="Choose targets"
+        action={<Badge tone="success">{selectedGoalIds.length} selected</Badge>}
       />
       <div className="grid gap-4">
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
             <Github aria-hidden="true" className="h-4 w-4 text-accent" />
-            Before you run this
+            What this can do safely
           </div>
           <p className="text-sm leading-6 text-secondary">
-            Create a public repository named exactly like your GitHub username, then give the fine-grained token
-            write access to that repository. GitHub renders that repository README on your profile.
+            Choose the GitHub achievements or profile signals you want to work toward. The app creates a factual profile README
+            action plan in your username/username repository. It does not fake stars, reviews, issues, or badge activity.
           </p>
         </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {achievementGoals.map((goal) => {
+            const active = selectedGoalIds.includes(goal.id);
+            const Icon = goal.icon;
+
+            return (
+              <button
+                key={goal.id}
+                className={`grid gap-3 rounded-lg border p-4 text-left transition-[border-color,background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.99] ${
+                  active
+                    ? "border-success-muted bg-success-muted/55 shadow-active"
+                    : "border-border bg-surface hover:border-border-strong hover:bg-surface-hover"
+                }`}
+                type="button"
+                onClick={() => toggleGoal(goal.id)}
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface-raised">
+                      <Icon aria-hidden="true" className={active ? "h-4 w-4 text-success" : "h-4 w-4 text-accent"} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-primary">{goal.title}</span>
+                      <span className="mt-1 block font-mono text-xs text-tertiary">{goal.label} / {goal.difficulty}</span>
+                    </span>
+                  </span>
+                  {active ? <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-success" /> : null}
+                </span>
+                <span className="text-sm leading-6 text-secondary">{goal.signal}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-lg border border-border bg-surface-inset p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+            <Target aria-hidden="true" className="h-4 w-4 text-accent" />
+            Selected plan
+          </div>
+          <div className="grid gap-3">
+            {selectedGoals.length ? (
+              selectedGoals.map((goal) => (
+                <div key={goal.id} className="rounded-md border border-border bg-surface p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-primary">{goal.title}</p>
+                    <Badge tone="neutral">{goal.evidence}</Badge>
+                  </div>
+                  <ul className="mt-3 grid gap-2">
+                    {goal.actions.slice(0, 2).map((action) => (
+                      <li key={action} className="flex items-start gap-2 text-sm leading-6 text-secondary">
+                        <CheckCircle2 aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0 text-success" />
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-secondary">Select at least one goal to generate a plan.</p>
+            )}
+          </div>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="GitHub username" placeholder="octocat" value={username} onChange={(event) => setUsername(event.target.value)} />
           <Input label="Fine-grained token" placeholder="github_pat_..." type="password" value={token} onChange={(event) => setToken(event.target.value)} />
@@ -70,9 +147,9 @@ export function AchievementLabClient() {
           />
         </label>
         <Input label="Featured project URL" value={projectUrl} onChange={(event) => setProjectUrl(event.target.value)} />
-        <Button onClick={updateProfileReadme} loading={isPending} disabled={token.length < 20 || !username || !headline || !focus}>
+        <Button onClick={updateProfileReadme} loading={isPending} disabled={token.length < 20 || !username || !headline || !focus || selectedGoalIds.length === 0}>
           <Sparkles aria-hidden="true" className="h-4 w-4" />
-          Update profile README
+          Publish selected goal plan
         </Button>
 
         {status.kind === "success" ? (
@@ -101,7 +178,7 @@ export function AchievementLabClient() {
           </div>
           <p className="text-sm leading-6 text-secondary">
             Use a fine-grained token scoped only to the username/username profile repository with Contents read/write and Metadata read.
-            The token is sent once and is not stored.
+            The token is sent once and is not stored. Selected goals are written as a transparent action plan.
           </p>
         </div>
       </div>
