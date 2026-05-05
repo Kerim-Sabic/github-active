@@ -70,11 +70,13 @@ const tracks: Array<{ value: Track; label: string }> = [
 export function DashboardShell({
   data,
   isDemo,
-  setup
+  setup,
+  authMode = "demo"
 }: {
   data: DashboardData;
   isDemo: boolean;
   setup: SetupStatus;
+  authMode?: "demo" | "github-app" | "supabase";
 }) {
   const [schedules, setSchedules] = useState(data.schedules);
   const [selectedScheduleId, setSelectedScheduleId] = useState(data.schedules[0]?.id ?? "");
@@ -224,7 +226,11 @@ export function DashboardShell({
             <div>
               <h1 className="text-xl font-semibold text-primary">GitHub Active Console</h1>
               <p className="text-sm text-secondary">
-                {isDemo ? "Demo surface. Connect GitHub to persist schedules and queue commits." : `Signed in as ${data.user.login}`}
+                {authMode === "supabase"
+                  ? `Signed in with Supabase GitHub as ${data.user.login}. Install the GitHub App or use manual mode for repository writes.`
+                  : isDemo
+                    ? "Demo surface. Connect GitHub to persist schedules and queue commits."
+                    : `Signed in as ${data.user.login}`}
               </p>
             </div>
           </div>

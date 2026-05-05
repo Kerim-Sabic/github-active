@@ -8,6 +8,7 @@ import {
   Github,
   KeyRound,
   LockKeyhole,
+  LogIn,
   ServerCog,
   SquareTerminal,
   Workflow,
@@ -31,6 +32,13 @@ const manualSignals = [
   ["Repository picker", "Only writable repos are actionable"],
   ["Journal commit", "Transparent generated artifact"],
   ["No token storage", "Token never enters the database"]
+] as const;
+
+const supabaseSignals = [
+  ["Supabase session", "GitHub identity cookie"],
+  ["No repo writes", "Authentication only"],
+  ["Manual compatible", "Use token path for one-shot commits"],
+  ["GitHub App compatible", "Install app for 24/7 automation"]
 ] as const;
 
 export default function ConnectPage() {
@@ -69,6 +77,7 @@ export default function ConnectPage() {
             <ConnectionSignal icon={Workflow} label="Auth route" value={setup.canStartGitHubAuth ? "GitHub App ready" : "Manual fallback available"} tone={setup.canStartGitHubAuth ? "success" : "warning"} />
             <ConnectionSignal icon={Database} label="Database" value={setup.databaseReady ? "Postgres linked" : "Scheduler DB missing"} tone={setup.databaseReady ? "success" : "warning"} />
             <ConnectionSignal icon={LockKeyhole} label="Secrets" value={setup.securityReady ? "Sessions signed" : "Netlify secrets required"} tone={setup.securityReady ? "success" : "warning"} />
+            <ConnectionSignal icon={LogIn} label="Supabase Auth" value={setup.supabaseReady ? "GitHub OAuth available" : "Supabase env missing"} tone={setup.supabaseReady ? "success" : "warning"} />
           </div>
         </div>
 
@@ -124,6 +133,23 @@ export default function ConnectPage() {
                   Open manual mode
                   <ArrowRight aria-hidden="true" className="h-4 w-4" />
                 </Link>
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="shadow-none">
+            <CardHeader title="Supabase GitHub Sign-In" eyebrow="Profile session" action={<LogIn aria-hidden="true" className="h-5 w-5 text-accent" />} />
+            <div className="grid gap-4">
+              <p className="text-sm leading-6 text-secondary">
+                Uses the GitHub OAuth provider configured inside Supabase. This signs users into the web app,
+                but repository automation still requires Automatic Mode or Manual Mode.
+              </p>
+              <SignalGrid signals={supabaseSignals} icon={LogIn} />
+              <Button asChild variant={setup.supabaseReady ? "primary" : "secondary"}>
+                <a href={setup.supabaseReady ? "/api/supabase/github" : "/setup"}>
+                  <Github aria-hidden="true" className="h-4 w-4" />
+                  {setup.supabaseReady ? "Sign in with Supabase GitHub" : "Configure Supabase env"}
+                </a>
               </Button>
             </div>
           </Card>

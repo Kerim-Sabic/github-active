@@ -57,3 +57,17 @@ psql "$NETLIFY_DATABASE_URL" -f drizzle/0000_initial.sql
 Supabase helper clients live in `src/utils/supabase`. The publishable URL/key are safe for browser clients when Supabase Row Level Security is configured correctly.
 
 For the existing Drizzle schedule database, set a Postgres connection string with `NETLIFY_DATABASE_URL`, `DATABASE_URL`, `POSTGRES_URL`, or `SUPABASE_DATABASE_URL`. A Supabase project URL and publishable key are not the same as a server Postgres connection string.
+
+Supabase GitHub OAuth is available at `/api/supabase/github` after `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set in Netlify. In the Supabase dashboard, the GitHub provider must use the Supabase callback URL:
+
+```txt
+https://tlduvvzisbvyjyqqnqur.supabase.co/auth/v1/callback
+```
+
+Also allow this app redirect URL in Supabase Auth URL settings:
+
+```txt
+https://githubactive.netlify.app/api/supabase/callback
+```
+
+This signs users into the web app. Repository writes and 24/7 automation still require the GitHub App flow or the one-shot Manual Mode token flow.

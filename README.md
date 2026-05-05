@@ -18,6 +18,7 @@ It is designed for developer journaling, learning logs, and transparent reposito
 - **Dashboard:** repository health, schedule controls, previews, run-now, pause/resume, and recent jobs.
 - **Setup console:** redacted production readiness for GitHub App, Netlify Database, session secrets, and worker secrets.
 - **Connect screen:** clear Automatic mode vs Manual mode instead of a raw production-credentials error.
+- **Supabase GitHub sign-in:** optional Supabase Auth session for user identity, separate from repository write access.
 - **Manual mode:** fine-grained token validation and one transparent journal commit, without storing tokens.
 - **Achievement Lab:** ethical profile-growth roadmap plus a working profile README updater for real GitHub profile improvement.
 
