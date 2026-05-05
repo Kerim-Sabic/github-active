@@ -26,7 +26,8 @@
   --color-on-accent: oklch(100% 0 0);
 
   --shadow-soft: 0 18px 60px oklch(20% 0.02 240 / 0.08);
-  --shadow-panel: inset 0 1px 0 oklch(100% 0 0 / 0.06), 0 18px 70px oklch(0% 0 0 / 0.18);
+  --shadow-panel: inset 0 1px 0 oklch(100% 0 0 / 0.08), 0 26px 90px oklch(0% 0 0 / 0.24);
+  --shadow-active: 0 0 0 1px oklch(70% 0.16 150 / 0.14), 0 18px 52px oklch(64% 0.16 150 / 0.14);
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
 }
@@ -71,10 +72,10 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(90deg, oklch(45% 0.03 240 / 0.08) 1px, transparent 1px),
-    linear-gradient(180deg, oklch(45% 0.03 240 / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(55% 0.04 240 / 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, oklch(55% 0.04 240 / 0.08) 1px, transparent 1px),
     var(--color-surface);
-  background-size: 48px 48px;
+  background-size: 56px 56px;
   color: var(--color-primary);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -87,7 +88,7 @@ body {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.78;
+  opacity: 0.94;
 }
 
 .activity-backdrop::before,
@@ -100,76 +101,125 @@ body {
 
 .activity-backdrop::before {
   background:
-    linear-gradient(90deg, var(--color-surface) 0%, transparent 18%, transparent 72%, var(--color-surface) 100%),
-    linear-gradient(180deg, var(--color-surface) 0%, transparent 24%, var(--color-surface) 100%);
+    linear-gradient(90deg, var(--color-surface) 0%, transparent 16%, transparent 76%, var(--color-surface) 100%),
+    linear-gradient(180deg, var(--color-surface) 0%, transparent 18%, transparent 58%, var(--color-surface) 100%);
 }
 
 .activity-backdrop::after {
   background:
-    linear-gradient(90deg, transparent 0%, oklch(70% 0.14 150 / 0.08) 50%, transparent 100%);
-  transform: translateX(-80%);
-  animation: activitySweep 8s linear infinite;
+    linear-gradient(90deg, transparent 0%, oklch(70% 0.15 150 / 0.12) 45%, transparent 100%);
+  transform: translateX(-86%);
+  animation: activitySweep 9.5s linear infinite;
+}
+
+.activity-board {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid oklch(42% 0.04 240 / 0.52);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, oklch(24% 0.018 240 / 0.86), oklch(14% 0.012 240 / 0.88)),
+    var(--color-surface-raised);
+  box-shadow: var(--shadow-panel);
+  transform-style: preserve-3d;
+  animation: boardDrift 12s ease-in-out infinite;
+}
+
+.activity-board-primary {
+  top: 4%;
+  right: -7%;
+  width: min(1040px, 108vw);
+  padding: 18px;
+  transform: rotate(-7deg);
+}
+
+.activity-board-secondary {
+  bottom: 6%;
+  left: -8%;
+  width: min(520px, 76vw);
+  padding: 14px;
+  opacity: 0.46;
+  transform: rotate(-7deg) scale(0.96);
+  animation-delay: -4s;
+}
+
+.activity-board-chrome {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.activity-board-chrome span {
+  width: 8px;
+  height: 8px;
+  border: 1px solid oklch(70% 0.12 150 / 0.22);
+  border-radius: 999px;
+  background: oklch(24% 0.016 240 / 0.9);
 }
 
 .activity-backdrop-grid {
-  position: absolute;
-  top: -8%;
-  right: -6%;
-  z-index: 1;
   display: grid;
-  width: min(980px, 92vw);
-  grid-template-columns: repeat(20, minmax(12px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(10px, 1fr);
+  grid-template-rows: repeat(7, minmax(10px, 1fr));
   gap: 6px;
-  transform: rotate(-8deg);
 }
 
 .activity-backdrop-console {
-  opacity: 0.42;
+  opacity: 0.68;
+}
+
+.activity-backdrop-console .activity-board-primary {
+  top: 7%;
+  right: -12%;
+  width: min(780px, 114vw);
+  padding: 14px;
+}
+
+.activity-backdrop-console .activity-board-secondary {
+  display: none;
 }
 
 .activity-backdrop-console .activity-backdrop-grid {
-  top: -4%;
-  right: -12%;
-  width: min(740px, 108vw);
-  grid-template-columns: repeat(18, minmax(10px, 1fr));
   gap: 5px;
 }
 
 .activity-tile {
   aspect-ratio: 1;
-  border: 1px solid oklch(70% 0.12 150 / 0.18);
+  min-width: 10px;
+  border: 1px solid oklch(70% 0.12 150 / 0.16);
   border-radius: 4px;
-  background: oklch(22% 0.018 150 / 0.6);
+  background: oklch(23% 0.018 150 / 0.72);
   box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.05);
   animation: activityPulse var(--activity-duration) ease-in-out infinite;
   animation-delay: var(--activity-delay);
 }
 
 .activity-tile-0 {
-  opacity: 0.28;
+  opacity: 0.36;
 }
 
 .activity-tile-1 {
-  background: oklch(33% 0.07 150 / 0.72);
-  opacity: 0.46;
+  background: oklch(32% 0.07 150 / 0.78);
+  opacity: 0.55;
 }
 
 .activity-tile-2 {
-  background: oklch(43% 0.11 150 / 0.78);
-  opacity: 0.62;
+  background: oklch(43% 0.11 150 / 0.84);
+  opacity: 0.7;
 }
 
 .activity-tile-3 {
-  background: oklch(56% 0.15 150 / 0.84);
-  opacity: 0.76;
+  background: oklch(57% 0.15 150 / 0.9);
+  opacity: 0.86;
 }
 
 .activity-tile-4 {
-  background: oklch(70% 0.18 150 / 0.9);
+  background: oklch(72% 0.18 150 / 0.96);
   box-shadow:
     inset 0 1px 0 oklch(100% 0 0 / 0.18),
-    0 0 22px oklch(70% 0.18 150 / 0.2);
-  opacity: 0.9;
+    0 0 22px oklch(70% 0.18 150 / 0.26);
+  opacity: 1;
 }
 
 @keyframes activityPulse {
@@ -180,17 +230,27 @@ body {
   }
   46% {
     filter: saturate(1.25);
-    transform: translateY(-1px);
+    transform: translateY(-1px) scale(1.02);
   }
 }
 
 @keyframes activitySweep {
   0% {
-    transform: translateX(-80%);
+    transform: translateX(-86%);
   }
   58%,
   100% {
-    transform: translateX(80%);
+    transform: translateX(86%);
+  }
+}
+
+@keyframes boardDrift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -10px;
   }
 }
 

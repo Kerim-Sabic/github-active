@@ -1,7 +1,16 @@
 import { cn } from "@/shared/utils/cn";
 
 export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <section className={cn("rounded-lg border border-border bg-surface-raised p-5 shadow-soft", className)}>{children}</section>;
+  return (
+    <section
+      className={cn(
+        "rounded-lg border border-border bg-surface-raised/92 p-5 shadow-soft backdrop-blur transition-[border-color,background-color,box-shadow] duration-200",
+        className
+      )}
+    >
+      {children}
+    </section>
+  );
 }
 
 export function CardHeader({ title, eyebrow, action }: { title: string; eyebrow?: string; action?: React.ReactNode }) {

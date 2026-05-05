@@ -247,7 +247,7 @@ export function DashboardShell({
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 py-5 xl:grid-cols-[292px_1fr_360px]">
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 py-5 xl:grid-cols-[300px_1fr_368px]">
         <aside className="grid content-start gap-5">
           <ConnectionHealth setup={setup} isDemo={isDemo} repositoryCount={data.repositories.length} />
           <RepositorySelector repositories={data.repositories} />
@@ -268,17 +268,17 @@ export function DashboardShell({
             <MetricCard icon={ShieldCheck} label="Catch-up" value={draftConfig?.catchUpPolicy ?? "--"} />
           </div>
 
-          <Card className="shadow-none">
+          <Card className="shadow-panel">
             <CardHeader
               title="Activity Plan"
               eyebrow="Forecast"
               action={<Badge tone="accent">{selectedSchedule?.repoFullName ?? "No repository"}</Badge>}
             />
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-flow-col grid-rows-7 gap-1.5 rounded-lg border border-border bg-surface-inset p-3">
               {heatmapCells.map((cell) => (
                 <span
                   key={cell.key}
-                  className="h-9 rounded-md border border-border"
+                  className="aspect-square min-h-4 rounded-[4px] border border-border shadow-[inset_0_1px_0_oklch(100%_0_0_/_0.08)]"
                   title={cell.title}
                   style={{ background: cell.background }}
                 />
@@ -335,6 +335,7 @@ function ConnectionHealth({
         eyebrow="Health"
         action={<Badge tone={ready ? "success" : "warning"}>{ready ? "Live" : "Action"}</Badge>}
       />
+      <ActivityMiniGrid />
       <div className="grid gap-3">
         <HealthRow icon={ready ? Wifi : AlertTriangle} label="GitHub App" value={setup.githubReady ? "configured" : "missing config"} tone={setup.githubReady ? "success" : "warning"} />
         <HealthRow icon={Database} label="Database" value={setup.databaseReady ? "connected" : "not configured"} tone={setup.databaseReady ? "success" : "warning"} />
@@ -684,7 +685,7 @@ function RecentRuns({ runs }: { runs: DashboardData["recentRuns"] }) {
 
 function MetricCard({ icon: Icon, label, value }: { icon: typeof Activity; label: string; value: string }) {
   return (
-    <section className="rounded-lg border border-border bg-surface-raised p-4 shadow-none">
+    <section className="rounded-lg border border-border bg-surface-raised/92 p-4 shadow-soft backdrop-blur">
       <Icon aria-hidden="true" className="mb-3 h-5 w-5 text-accent" />
       <p className="truncate font-mono text-xl text-primary">{value}</p>
       <p className="mt-1 text-sm text-secondary">{label}</p>
@@ -831,16 +832,46 @@ function Legend({ color, label }: { color: string; label: string }) {
 }
 
 function buildHeatmapCells() {
-  return Array.from({ length: 98 }, (_, index) => {
+  return Array.from({ length: 7 * 18 }, (_, index) => {
+    const week = Math.floor(index / 7);
+    const day = index % 7;
     const isQuiet = index % 11 === 0 || index % 19 === 0;
-    const isFocus = index % 17 === 0;
+    const isFocus = week % 5 === 0 && day > 1 && day < 6;
+    const isPeak = week % 9 === 0 && day % 2 === 0;
 
     return {
       key: `cell-${index}`,
       title: isQuiet ? "Quiet day" : isFocus ? "Focus window" : "Planned activity",
-      background: isQuiet ? "var(--color-surface-muted)" : isFocus ? "var(--color-accent-muted)" : "var(--color-success-muted)"
+      background: isQuiet
+        ? "var(--color-surface-muted)"
+        : isPeak
+          ? "var(--color-success)"
+          : isFocus
+            ? "var(--color-accent-muted)"
+            : "var(--color-success-muted)"
     };
   });
+}
+
+function ActivityMiniGrid() {
+  return (
+    <div className="mb-4 grid grid-flow-col grid-rows-7 gap-1 rounded-lg border border-border bg-surface-inset p-3">
+      {Array.from({ length: 7 * 9 }, (_, index) => (
+        <span
+          key={index}
+          className={`aspect-square rounded-[3px] border border-border ${
+            index % 17 === 0
+              ? "bg-success"
+              : index % 5 === 0
+                ? "bg-success-muted"
+                : index % 7 === 0
+                  ? "bg-accent-muted"
+                  : "bg-surface-muted"
+          }`}
+        />
+      ))}
+    </div>
+  );
 }
 
 function timeUntil(isoDate: string): string {

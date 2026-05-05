@@ -93,10 +93,10 @@ export function ManualModeClient() {
   }
 
   return (
-    <Card className="shadow-none">
+    <Card className="shadow-panel">
       <CardHeader
-        title="Manual Access Validator"
-        eyebrow="Fallback mode"
+        title="Manual GitHub Access"
+        eyebrow="Fallback execution path"
         action={<Badge tone="warning">No token storage</Badge>}
       />
       <div className="grid gap-4">

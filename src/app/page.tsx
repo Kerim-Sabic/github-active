@@ -60,7 +60,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.86fr_1.14fr]">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="max-w-2xl">
           <StatusStrip ready={setup.canStartGitHubAuth} missing={setup.missing.length} />
           <h1 className="mt-6 text-5xl font-semibold leading-tight text-primary md:text-7xl">
@@ -89,12 +89,13 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid gap-3 text-sm text-secondary sm:grid-cols-2">
             {productPoints.map((point) => (
-              <div key={point} className="flex items-start gap-2">
+              <div key={point} className="flex items-start gap-2 rounded-md border border-border bg-surface-raised/74 p-3 backdrop-blur">
                 <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <span>{point}</span>
               </div>
             ))}
           </div>
+          <LiveActivityStrip />
         </div>
 
         <ConsolePreview />
@@ -178,19 +179,49 @@ export default function HomePage() {
 
 function StatusStrip({ ready, missing }: { ready: boolean; missing: number }) {
   return (
-    <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-raised p-2 shadow-soft">
+    <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-raised/90 p-2 shadow-soft backdrop-blur">
       <Badge tone={ready ? "success" : "warning"}>{ready ? "Live auth ready" : `${missing} setup items`}</Badge>
       <span className="font-mono text-xs text-tertiary">githubactive.netlify.app</span>
     </div>
   );
 }
 
+function LiveActivityStrip() {
+  return (
+    <div className="mt-6 grid gap-2 rounded-lg border border-border bg-surface-raised/76 p-3 shadow-soft backdrop-blur">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-xs text-tertiary">activity signal</span>
+        <span className="flex items-center gap-2 text-xs text-success">
+          <span className="h-2 w-2 rounded-full bg-success" />
+          animated contribution field
+        </span>
+      </div>
+      <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-1">
+        {Array.from({ length: 24 }, (_, index) => (
+          <span
+            key={index}
+            className={`h-3 rounded-[3px] border border-success-muted/40 ${
+              index % 7 === 0
+                ? "bg-success"
+                : index % 5 === 0
+                  ? "bg-accent"
+                  : index % 3 === 0
+                    ? "bg-success-muted"
+                    : "bg-surface-muted"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ConsolePreview() {
-  const days = Array.from({ length: 84 }, (_, index) => index);
+  const days = Array.from({ length: 7 * 17 }, (_, index) => index);
 
   return (
-    <div className="rounded-lg border border-border bg-surface-raised p-3 shadow-panel">
-      <div className="technical-grid scanline rounded-md border border-border bg-surface-inset p-4">
+    <div className="rounded-lg border border-border bg-surface-raised/94 p-3 shadow-panel backdrop-blur">
+      <div className="technical-grid scanline rounded-md border border-border bg-surface-inset p-4 shadow-active">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface-raised">
@@ -210,18 +241,20 @@ function ConsolePreview() {
               <span className="text-sm font-medium text-secondary">Activity heatmap</span>
               <span className="font-mono text-xs text-success">next run 37m</span>
             </div>
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-flow-col grid-rows-7 gap-1.5">
               {days.map((day) => (
                 <span
                   key={day}
-                  className="h-7 rounded-md border border-border"
+                  className="aspect-square rounded-[4px] border border-border shadow-[inset_0_1px_0_oklch(100%_0_0_/_0.08)]"
                   style={{
                     background:
-                      day % 13 === 0
-                        ? "var(--color-accent-muted)"
-                        : day % 4 === 0 || day % 7 === 0
-                          ? "var(--color-success-muted)"
-                          : "var(--color-surface-muted)"
+                      day % 19 === 0
+                        ? "var(--color-success)"
+                        : day % 13 === 0
+                          ? "var(--color-accent)"
+                          : day % 4 === 0 || day % 7 === 0
+                            ? "var(--color-success-muted)"
+                            : "var(--color-surface-muted)"
                   }}
                 />
               ))}

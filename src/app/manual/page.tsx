@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Github, KeyRound, ShieldCheck, SquareTerminal } from "lucide-react";
+import { ArrowRight, Database, GitCommit, Github, KeyRound, LockKeyhole, ShieldCheck, SquareTerminal } from "lucide-react";
 import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -48,6 +48,12 @@ export default function ManualModePage() {
               </a>
             </Button>
           </div>
+          <div className="mt-6 grid gap-3">
+            <ManualFlowRow icon={KeyRound} title="Token arrives" copy="Submitted once to a serverless route over HTTPS." />
+            <ManualFlowRow icon={Database} title="Access inspected" copy="GitHub returns identity and writable repositories." />
+            <ManualFlowRow icon={GitCommit} title="Artifact written" copy="One transparent developer journal commit, never hidden." />
+            <ManualFlowRow icon={LockKeyhole} title="Token discarded" copy="No database insert, no session storage, no long-lived credential." />
+          </div>
         </div>
 
         <ManualModeClient />
@@ -72,5 +78,27 @@ export default function ManualModePage() {
         </Card>
       </section>
     </main>
+  );
+}
+
+function ManualFlowRow({
+  icon: Icon,
+  title,
+  copy
+}: {
+  icon: typeof KeyRound;
+  title: string;
+  copy: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface-raised/76 p-3 shadow-soft backdrop-blur">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface">
+        <Icon aria-hidden="true" className="h-4 w-4 text-accent" />
+      </span>
+      <div>
+        <h2 className="text-sm font-semibold text-primary">{title}</h2>
+        <p className="mt-1 text-sm leading-6 text-secondary">{copy}</p>
+      </div>
+    </div>
   );
 }
