@@ -1,17 +1,22 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  Copy,
   ExternalLink,
   Github,
   Info,
+  Link2,
   LogIn,
   Play,
+  RefreshCcw,
   Sparkles,
-  Square
+  Square,
+  Star,
+  Users
 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -25,6 +30,7 @@ import {
   socialAchievements
 } from "@/shared/achievement-goals";
 import { ProfileReadmeForm } from "./profile-readme-form";
+import { SupporterModal } from "./supporter-modal";
 
 const automatableAchievements = achievementGoals.filter(
   (goal): goal is AchievementGoal & { automation: AchievementAutomation } =>
@@ -45,17 +51,39 @@ type RunState =
   | { status: "complete"; achievement: AchievementAutomation; profileUrl?: string }
   | { status: "failed"; achievement: AchievementAutomation; reason?: string };
 
+type AchievementStatus = {
+  sandboxExists: boolean;
+  sandboxUrl?: string;
+  mergedPullRequests: number;
+  mergedPullRequestsWithoutReview: number;
+  closedIssuesUnder5min: number;
+  coAuthoredCommits: number;
+  tiers: {
+    pullShark: { reached: number | null; next: number | null; all: number[] };
+    yolo: boolean;
+    quickdraw: boolean;
+    pair: boolean;
+  };
+};
+
+const PR_PER_CLICK_CAP = 16;
+
 export function AchievementLabClient({
   authedLogin,
-  avatarUrl
+  avatarUrl,
+  pairFromUrl
 }: {
   authedLogin: string | null;
   avatarUrl: string | null;
+  pairFromUrl: string | null;
 }) {
-  const [count, setCount] = useState(2);
-  const [pairWith, setPairWith] = useState("");
+  const [pairWith, setPairWith] = useState(pairFromUrl ?? "");
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
+  const [achievementStatus, setAchievementStatus] = useState<AchievementStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [supporter, setSupporter] = useState(false);
+  const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const isRunning = runState.status === "running";
@@ -71,6 +99,23 @@ export function AchievementLabClient({
     ]);
   }, []);
 
+  const refreshStatus = useCallback(async () => {
+    if (!authedLogin) return;
+    setStatusLoading(true);
+    try {
+      const response = await fetch("/api/achievements/status", { cache: "no-store" });
+      if (!response.ok) return;
+      const raw = (await response.json()) as AchievementStatus;
+      setAchievementStatus(raw);
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [authedLogin]);
+
+  useEffect(() => {
+    refreshStatus();
+  }, [refreshStatus]);
+
   const cancelRun = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -79,7 +124,7 @@ export function AchievementLabClient({
   }, [appendLog]);
 
   const run = useCallback(
-    async (achievement: AchievementAutomation) => {
+    async (achievement: AchievementAutomation, count?: number) => {
       if (!authedLogin) return;
       if (achievement === "pair-extraordinaire" && pairWith.trim().length === 0) {
         appendLog({ kind: "error", message: "Enter a partner GitHub username before running Pair Extraordinaire." });
@@ -141,13 +186,30 @@ export function AchievementLabClient({
         setRunState({ status: "failed", achievement, reason: message });
       } finally {
         abortRef.current = null;
+        // Refresh status after every run so progress bars reflect new merges.
+        setTimeout(() => refreshStatus(), 1500);
       }
     },
-    [appendLog, authedLogin, count, pairWith]
+    [appendLog, authedLogin, pairWith, refreshStatus]
   );
+
+  const copyInvite = useCallback(async () => {
+    if (!authedLogin) return;
+    const url = `${window.location.origin}/achievements?pair=${encodeURIComponent(authedLogin)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard blocked — surface a manual copy fallback.
+      window.prompt("Copy your pair invite link:", url);
+    }
+  }, [authedLogin]);
 
   return (
     <div className="grid gap-10">
+      <SupporterModal active={Boolean(authedLogin)} onSupporter={setSupporter} />
+
       <header className="grid gap-3 md:flex md:items-end md:justify-between">
         <div>
           <Badge tone="success" className="mb-3 inline-flex">
@@ -158,15 +220,25 @@ export function AchievementLabClient({
             Click. Earn. Repeat.
           </h1>
           <p className="mt-2 max-w-2xl text-[13px] leading-7 text-secondary">
-            Each Run button below performs the real GitHub actions required for that achievement, in your{" "}
+            Each Run button performs the real GitHub actions for that achievement, in your{" "}
             <span className="font-mono text-primary">github-active-sandbox</span> repo.
           </p>
         </div>
-
-        <SignedInPill login={authedLogin} avatarUrl={avatarUrl} />
+        <SignedInPill login={authedLogin} avatarUrl={avatarUrl} supporter={supporter} />
       </header>
 
       {!authedLogin ? <SignInBanner /> : null}
+
+      {pairFromUrl && authedLogin ? <PairInviteBanner login={pairFromUrl} /> : null}
+
+      {achievementStatus ? (
+        <ProgressOverview
+          status={achievementStatus}
+          loading={statusLoading}
+          onRefresh={refreshStatus}
+          authedLogin={authedLogin}
+        />
+      ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -177,27 +249,111 @@ export function AchievementLabClient({
               authed={Boolean(authedLogin)}
               isRunning={isRunning && runState.status === "running" && runState.achievement === goal.automation}
               isOtherRunning={isRunning && (runState.status !== "running" || runState.achievement !== goal.automation)}
-              onRun={() => run(goal.automation)}
-              count={count}
-              onCountChange={setCount}
+              onRun={(count) => run(goal.automation, count)}
               pairWith={pairWith}
               onPairWithChange={setPairWith}
+              onCopyInvite={copyInvite}
+              copied={copied}
+              status={achievementStatus}
               completed={runState.status === "complete" && runState.achievement === goal.automation}
               failed={runState.status === "failed" && runState.achievement === goal.automation}
             />
           ))}
         </div>
 
-        <RunConsole
-          logs={logs}
-          state={runState}
-          onCancel={cancelRun}
-        />
+        <RunConsole logs={logs} state={runState} onCancel={cancelRun} />
       </section>
 
       <SocialSection />
 
       <ManualSection authedLogin={authedLogin} />
+    </div>
+  );
+}
+
+function ProgressOverview({
+  status,
+  loading,
+  onRefresh,
+  authedLogin
+}: {
+  status: AchievementStatus;
+  loading: boolean;
+  onRefresh: () => void;
+  authedLogin: string | null;
+}) {
+  const ps = status.tiers.pullShark;
+  const towardNext = ps.next ? Math.min(status.mergedPullRequests / ps.next, 1) : 1;
+  return (
+    <Card className="grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-tertiary">Sandbox progress</p>
+          <p className="mt-0.5 text-[13px] font-semibold text-primary">
+            {status.sandboxExists
+              ? <>Live in <span className="font-mono">{authedLogin}/github-active-sandbox</span></>
+              : "Sandbox repo will be created on first run"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {status.sandboxUrl ? (
+            <Button asChild size="sm" variant="secondary">
+              <a href={status.sandboxUrl} target="_blank" rel="noreferrer">
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                Sandbox
+              </a>
+            </Button>
+          ) : null}
+          <Button onClick={onRefresh} loading={loading} size="sm" variant="secondary">
+            <RefreshCcw aria-hidden="true" className="h-3.5 w-3.5" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      <div className="grid gap-2.5 md:grid-cols-4">
+        <Stat label="Merged PRs" value={status.mergedPullRequests} />
+        <Stat label="YOLO eligible" value={status.tiers.yolo ? "yes" : "no"} ok={status.tiers.yolo} />
+        <Stat label="Quickdraw" value={status.tiers.quickdraw ? "earned" : "not yet"} ok={status.tiers.quickdraw} />
+        <Stat label="Co-authored" value={status.coAuthoredCommits} ok={status.tiers.pair} />
+      </div>
+      <div className="mt-2 grid gap-1.5">
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="text-secondary">
+            Pull Shark · {status.mergedPullRequests} merged
+            {ps.next ? ` · next tier ${ps.next}` : " · maxed"}
+          </span>
+          <span className="font-mono text-tertiary">
+            {ps.all.map((tier) => `${status.mergedPullRequests >= tier ? "✓" : "·"} ${tier}`).join("  ")}
+          </span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-surface">
+          <div
+            className="h-full bg-accent transition-all duration-500"
+            style={{ width: `${Math.round(towardNext * 100)}%` }}
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function Stat({ label, value, ok }: { label: string; value: number | string; ok?: boolean }) {
+  return (
+    <div className="rounded-md border border-border bg-surface px-3 py-2.5">
+      <p className="text-[10px] uppercase tracking-[0.06em] text-tertiary">{label}</p>
+      <p className={`mt-1 font-mono text-[15px] ${ok ? "text-success" : "text-primary"}`}>{value}</p>
+    </div>
+  );
+}
+
+function PairInviteBanner({ login }: { login: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-accent-muted bg-accent-muted/40 px-5 py-4 text-[13px] text-primary">
+      <Link2 aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
+      <p>
+        <span className="font-medium">@{login}</span> invited you to pair.{" "}
+        <span className="text-secondary">Click <span className="font-mono">Run Pair Extraordinaire</span> below to mutually earn the badge.</span>
+      </p>
     </div>
   );
 }
@@ -257,7 +413,7 @@ async function safelyReadError(response: Response): Promise<string> {
   }
 }
 
-function SignedInPill({ login, avatarUrl }: { login: string | null; avatarUrl: string | null }) {
+function SignedInPill({ login, avatarUrl, supporter }: { login: string | null; avatarUrl: string | null; supporter: boolean }) {
   if (!login) {
     return (
       <Button asChild size="sm">
@@ -286,6 +442,12 @@ function SignedInPill({ login, avatarUrl }: { login: string | null; avatarUrl: s
         </span>
       )}
       <span className="text-[12px] font-medium text-primary">@{login}</span>
+      {supporter ? (
+        <span className="inline-flex items-center gap-1 rounded-full border border-success-muted bg-success-muted/50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-success">
+          <Star aria-hidden="true" className="h-2.5 w-2.5" />
+          Supporter
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -319,10 +481,11 @@ function AutomatableCard({
   isRunning,
   isOtherRunning,
   onRun,
-  count,
-  onCountChange,
   pairWith,
   onPairWithChange,
+  onCopyInvite,
+  copied,
+  status,
   completed,
   failed
 }: {
@@ -330,17 +493,26 @@ function AutomatableCard({
   authed: boolean;
   isRunning: boolean;
   isOtherRunning: boolean;
-  onRun: () => void;
-  count: number;
-  onCountChange: (value: number) => void;
+  onRun: (count?: number) => void;
   pairWith: string;
   onPairWithChange: (value: string) => void;
+  onCopyInvite: () => void;
+  copied: boolean;
+  status: AchievementStatus | null;
   completed: boolean;
   failed: boolean;
 }) {
   const Icon = goal.icon;
-  const supportsCount = goal.automation === "pull-shark" || goal.automation === "yolo";
+  const supportsTiers = goal.automation === "pull-shark";
   const supportsPair = goal.automation === "pair-extraordinaire";
+
+  let earned = false;
+  if (status) {
+    if (goal.automation === "pull-shark") earned = status.tiers.pullShark.reached !== null;
+    else if (goal.automation === "yolo") earned = status.tiers.yolo;
+    else if (goal.automation === "quickdraw") earned = status.tiers.quickdraw;
+    else if (goal.automation === "pair-extraordinaire") earned = status.tiers.pair;
+  }
 
   return (
     <Card className="grid content-between gap-4">
@@ -354,69 +526,154 @@ function AutomatableCard({
             <p className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-tertiary">{goal.label}</p>
           </div>
         </div>
-        <Badge tone={completed ? "success" : failed ? "danger" : "accent"}>
-          {completed ? "Earned" : failed ? "Failed" : "Auto"}
+        <Badge tone={completed || earned ? "success" : failed ? "danger" : "accent"}>
+          {completed || earned ? "Earned" : failed ? "Failed" : "Auto"}
         </Badge>
       </div>
 
       <p className="text-[12px] leading-6 text-secondary">{goal.signal}</p>
 
-      {goal.tiers ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {goal.tiers.map((tier) => (
-            <span
-              key={tier}
-              className="inline-flex h-5 items-center rounded-full border border-border bg-surface px-2 font-mono text-[10px] text-tertiary"
-            >
-              {tier}
-            </span>
-          ))}
-        </div>
+      {supportsTiers && status ? (
+        <PullSharkTiers status={status} />
       ) : null}
 
       <div className="grid gap-3 border-t border-border pt-4">
-        {supportsCount ? (
-          <div className="grid gap-1.5">
-            <span className="text-[11px] font-medium text-secondary">PRs to ship in this run</span>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min={1}
-                max={16}
-                value={count}
-                onChange={(event) => onCountChange(Number(event.target.value))}
-                disabled={!authed || isRunning}
-                className="w-full accent-[var(--color-accent)]"
-              />
-              <span className="min-w-10 rounded-md border border-border bg-surface px-2 py-1 text-center font-mono text-[12px] text-primary">
-                {count}
-              </span>
-            </div>
-          </div>
-        ) : null}
-
         {supportsPair ? (
-          <Input
-            label="Co-author GitHub username"
-            placeholder="octocat"
-            value={pairWith}
-            onChange={(event) => onPairWithChange(event.target.value)}
-            disabled={!authed || isRunning}
-            helper="Their public profile is fetched to build the Co-authored-by trailer."
-          />
+          <>
+            <Input
+              label="Co-author GitHub username"
+              placeholder="octocat"
+              value={pairWith}
+              onChange={(event) => onPairWithChange(event.target.value)}
+              disabled={!authed || isRunning}
+              helper="Their public profile is fetched to build the Co-authored-by trailer."
+            />
+            <button
+              type="button"
+              onClick={onCopyInvite}
+              disabled={!authed}
+              className="inline-flex items-center justify-center gap-2 self-start rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] text-secondary transition-colors hover:bg-surface-hover hover:text-primary disabled:opacity-60"
+            >
+              {copied ? <CheckCircle2 aria-hidden="true" className="h-3 w-3 text-success" /> : <Copy aria-hidden="true" className="h-3 w-3" />}
+              {copied ? "Copied" : "Copy invite link"}
+            </button>
+          </>
         ) : null}
 
-        <Button
-          onClick={onRun}
-          disabled={!authed || isRunning || isOtherRunning}
-          loading={isRunning}
-          className="w-full"
-        >
-          {!isRunning ? <Play aria-hidden="true" className="h-3.5 w-3.5" /> : null}
-          {isRunning ? "Running..." : authed ? `Run ${goal.title}` : "Sign in to run"}
-        </Button>
+        {supportsTiers ? (
+          <PullSharkRunButtons
+            authed={authed}
+            isRunning={isRunning}
+            isOtherRunning={isOtherRunning}
+            onRun={onRun}
+            status={status}
+          />
+        ) : (
+          <Button
+            onClick={() => onRun()}
+            disabled={!authed || isRunning || isOtherRunning}
+            loading={isRunning}
+            className="w-full"
+          >
+            {!isRunning ? <Play aria-hidden="true" className="h-3.5 w-3.5" /> : null}
+            {isRunning ? "Running..." : authed ? `Run ${goal.title}` : "Sign in to run"}
+          </Button>
+        )}
       </div>
     </Card>
+  );
+}
+
+function PullSharkTiers({ status }: { status: AchievementStatus }) {
+  const merged = status.mergedPullRequests;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {status.tiers.pullShark.all.map((tier) => {
+        const reached = merged >= tier;
+        return (
+          <span
+            key={tier}
+            className={`inline-flex h-5 items-center gap-1 rounded-full border px-2 font-mono text-[10px] ${
+              reached
+                ? "border-success-muted bg-success-muted/50 text-success"
+                : "border-border bg-surface text-tertiary"
+            }`}
+          >
+            {reached ? "✓" : ""}{tier}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function PullSharkRunButtons({
+  authed,
+  isRunning,
+  isOtherRunning,
+  onRun,
+  status
+}: {
+  authed: boolean;
+  isRunning: boolean;
+  isOtherRunning: boolean;
+  onRun: (count: number) => void;
+  status: AchievementStatus | null;
+}) {
+  const merged = status?.mergedPullRequests ?? 0;
+  const next = status?.tiers.pullShark.next ?? 1;
+  const remaining = Math.max(0, next - merged);
+  const advance = Math.min(remaining || PR_PER_CLICK_CAP, PR_PER_CLICK_CAP);
+
+  return (
+    <div className="grid gap-2">
+      <div className="grid grid-cols-3 gap-1.5">
+        <Button
+          onClick={() => onRun(1)}
+          disabled={!authed || isRunning || isOtherRunning}
+          variant="secondary"
+          size="sm"
+        >
+          +1
+        </Button>
+        <Button
+          onClick={() => onRun(Math.min(advance, PR_PER_CLICK_CAP))}
+          disabled={!authed || isRunning || isOtherRunning || advance === 0}
+          variant="secondary"
+          size="sm"
+        >
+          +{advance || 0}{remaining > 0 && remaining > advance ? "*" : ""}
+        </Button>
+        <Button
+          onClick={() => onRun(PR_PER_CLICK_CAP)}
+          disabled={!authed || isRunning || isOtherRunning}
+          variant="secondary"
+          size="sm"
+        >
+          +{PR_PER_CLICK_CAP}
+        </Button>
+      </div>
+      <Button
+        onClick={() => onRun(advance || 2)}
+        disabled={!authed || isRunning || isOtherRunning}
+        loading={isRunning}
+        className="w-full"
+      >
+        {!isRunning ? <Play aria-hidden="true" className="h-3.5 w-3.5" /> : null}
+        {isRunning
+          ? "Running..."
+          : authed
+            ? remaining > 0
+              ? `Run toward ${next} (${advance} this click)`
+              : "Run Pull Shark"
+            : "Sign in to run"}
+      </Button>
+      {remaining > 0 && remaining > PR_PER_CLICK_CAP ? (
+        <p className="text-[10px] text-tertiary">
+          * Per-click cap is {PR_PER_CLICK_CAP} PRs to stay under GitHub&apos;s abuse limits. Click again to keep going.
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -449,7 +706,7 @@ function RunConsole({
         ) : null}
       </div>
 
-      <div className="grid max-h-[360px] gap-1.5 overflow-y-auto rounded-md border border-border bg-surface p-3 font-mono text-[11.5px] leading-6">
+      <div className="grid max-h-[420px] gap-1.5 overflow-y-auto rounded-md border border-border bg-surface p-3 font-mono text-[11.5px] leading-6">
         {logs.length === 0 ? (
           <p className="text-tertiary">Waiting for a run.</p>
         ) : (
@@ -528,7 +785,9 @@ function SocialSection() {
       </div>
       <p className="max-w-3xl text-[12px] leading-6 text-secondary">
         These achievements depend on real people. The lab points you at the legitimate way to earn each one rather
-        than pretending to fake it.
+        than pretending to fake it. Looking for a partner for{" "}
+        <span className="font-medium text-primary">Pair Extraordinaire</span>? Use the{" "}
+        <a href="/coop" className="text-accent hover:underline"><Users className="mr-0.5 inline h-3 w-3" />Pair Board</a>.
       </p>
       <div className="grid gap-4 md:grid-cols-2">
         {socialAchievements.map((goal) => {
@@ -605,4 +864,3 @@ function ManualSection({ authedLogin }: { authedLogin: string | null }) {
     </section>
   );
 }
-

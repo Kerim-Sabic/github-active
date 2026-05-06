@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -19,6 +20,8 @@ export const users = pgTable(
     avatarUrl: text("avatar_url"),
     name: text("name"),
     email: text("email"),
+    starredAt: timestamp("starred_at", { withTimezone: true }),
+    supporterPromptDismissedAt: timestamp("supporter_prompt_dismissed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
   },
@@ -117,7 +120,51 @@ export const auditEvents = pgTable("audit_events", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });
 
+export const pairSignups = pgTable(
+  "pair_signups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    githubLogin: text("github_login").notNull(),
+    githubUserId: integer("github_user_id").notNull(),
+    avatarUrl: text("avatar_url"),
+    status: text("status").default("waiting").notNull(),
+    matchedWithUserId: uuid("matched_with_user_id").references(() => users.id, { onDelete: "set null" }),
+    matchedAt: timestamp("matched_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("pair_signups_status_idx").on(table.status),
+    index("pair_signups_user_id_idx").on(table.userId)
+  ]
+);
+
+export const repoShowcase = pgTable(
+  "repo_showcase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    ownerLogin: text("owner_login").notNull(),
+    repoName: text("repo_name").notNull(),
+    description: text("description"),
+    homepage: text("homepage"),
+    language: text("language"),
+    stargazersCount: integer("stargazers_count").default(0).notNull(),
+    forksCount: integer("forks_count").default(0).notNull(),
+    refreshedAt: timestamp("refreshed_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    uniqueIndex("repo_showcase_user_repo_idx").on(table.userId, table.ownerLogin, table.repoName),
+    index("repo_showcase_recent_idx").on(table.createdAt)
+  ]
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type RepositoryRow = typeof repositories.$inferSelect;
 export type AutomationScheduleRow = typeof automationSchedules.$inferSelect;
 export type PlannedCommitRow = typeof plannedCommits.$inferSelect;
+export type PairSignupRow = typeof pairSignups.$inferSelect;
+export type RepoShowcaseRow = typeof repoShowcase.$inferSelect;

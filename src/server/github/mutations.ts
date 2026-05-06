@@ -14,28 +14,76 @@ export class GitHubMutationError extends Error {
   }
 }
 
+export class BranchCollisionError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+const MAX_RETRIES = 3;
+const BACKOFF_MS = [500, 1500, 3500];
+
 async function request<T>(
   url: string,
   init: RequestInit & { token: string },
   schema: z.ZodType<T>
 ): Promise<T> {
   const { token, ...rest } = init;
-  const response = await fetch(url, {
-    ...rest,
-    headers: githubHeaders(token)
-  });
 
-  if (!response.ok) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    const response = await fetch(url, {
+      ...rest,
+      headers: githubHeaders(token)
+    });
+
+    if (response.ok) {
+      const raw: unknown = await response.json();
+      return schema.parse(raw);
+    }
+
     const body = await response.text();
-    throw new GitHubMutationError(
-      `GitHub ${rest.method ?? "GET"} ${url} failed (${response.status}): ${body}`,
-      response.status,
-      response.headers.get("retry-after")
-    );
+    const retryAfterHeader = response.headers.get("retry-after");
+    const status = response.status;
+
+    // 401: never retry; surface immediately for reauth.
+    if (status === 401) {
+      throw new GitHubMutationError(
+        `GitHub ${rest.method ?? "GET"} ${url} failed (401): ${body}`,
+        401,
+        retryAfterHeader
+      );
+    }
+
+    // 422 with "Reference already exists" is a branch / ref collision —
+    // surface a typed error so the caller can regenerate the name and retry.
+    if (status === 422 && /already exists/i.test(body)) {
+      throw new BranchCollisionError(
+        `GitHub ref already exists at ${url}: ${body}`
+      );
+    }
+
+    const isLastAttempt = attempt === MAX_RETRIES;
+    const isRetryable =
+      status === 403 || status === 429 || (status >= 500 && status < 600);
+
+    if (!isRetryable || isLastAttempt) {
+      throw new GitHubMutationError(
+        `GitHub ${rest.method ?? "GET"} ${url} failed (${status}): ${body}`,
+        status,
+        retryAfterHeader
+      );
+    }
+
+    const headerWait = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : null;
+    const waitMs = headerWait && headerWait > 0
+      ? Math.min(headerWait * 1000, 30_000)
+      : BACKOFF_MS[attempt] ?? 3500;
+
+    await sleep(waitMs);
   }
 
-  const raw: unknown = await response.json();
-  return schema.parse(raw);
+  // Unreachable — the loop either returns or throws.
+  throw new GitHubMutationError(`GitHub ${rest.method ?? "GET"} ${url} exhausted retries`, 500, null);
 }
 
 const PublicUserSchema = z.object({

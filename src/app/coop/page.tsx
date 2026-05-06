@@ -2,16 +2,12 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { getSupabaseAuthUser } from "@/server/auth/supabase-session";
-import { AchievementLabClient } from "./achievement-lab-client";
+import { CoopClient } from "./coop-client";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-export default async function AchievementsPage({ searchParams }: { searchParams?: SearchParams }) {
+export default async function CoopPage() {
   const supabaseUser = await getSupabaseAuthUser();
-  const params = searchParams ? await searchParams : {};
-  const pairFromUrl = readParam(params.pair);
 
   return (
     <main className="relative z-10 min-h-screen">
@@ -24,10 +20,9 @@ export default async function AchievementsPage({ searchParams }: { searchParams?
             <span className="text-[13px] font-semibold tracking-tight text-primary">GitHub Active</span>
           </Link>
           <nav className="hidden items-center gap-6 text-[12px] text-secondary md:flex">
-            <Link href="/coop" className="transition-colors hover:text-primary">Pair Board</Link>
+            <Link href="/achievements" className="transition-colors hover:text-primary">Lab</Link>
             <Link href="/showcase" className="transition-colors hover:text-primary">Showcase</Link>
             <Link href="/dashboard" className="transition-colors hover:text-primary">Dashboard</Link>
-            <Link href="/manual" className="transition-colors hover:text-primary">Manual</Link>
           </nav>
           <Button asChild size="sm" variant="secondary">
             <Link href="/connect">Switch account</Link>
@@ -35,25 +30,12 @@ export default async function AchievementsPage({ searchParams }: { searchParams?
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 pt-12">
-        <AchievementLabClient
+      <section className="mx-auto max-w-3xl px-6 pb-24 pt-12">
+        <CoopClient
           authedLogin={supabaseUser?.login ?? null}
-          avatarUrl={supabaseUser?.avatarUrl ?? null}
-          pairFromUrl={sanitizeLogin(pairFromUrl)}
+          authedAvatar={supabaseUser?.avatarUrl ?? null}
         />
       </section>
     </main>
   );
-}
-
-function readParam(value: string | string[] | undefined): string | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
-}
-
-function sanitizeLogin(input: string | null): string | null {
-  if (!input) return null;
-  const trimmed = input.trim().slice(0, 80);
-  if (!/^[a-zA-Z0-9-]+$/.test(trimmed)) return null;
-  return trimmed;
 }

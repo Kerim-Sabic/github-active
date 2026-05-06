@@ -218,7 +218,8 @@ function SiteHeader() {
         <nav className="hidden items-center gap-6 text-[12px] text-secondary md:flex" aria-label="Primary">
           <a href="#features" className="transition-colors hover:text-primary">Features</a>
           <a href="#achievements" className="transition-colors hover:text-primary">Achievements</a>
-          <a href="#how" className="transition-colors hover:text-primary">How it works</a>
+          <Link href="/coop" className="transition-colors hover:text-primary">Pair Board</Link>
+          <Link href="/showcase" className="transition-colors hover:text-primary">Showcase</Link>
           <Link href="/dashboard" className="transition-colors hover:text-primary">Dashboard</Link>
           <a
             href="https://github.com/Kerim-Sabic/github-active"
@@ -270,6 +271,8 @@ function SiteFooter() {
           >
             Source
           </a>
+          <Link href="/coop" className="transition-colors hover:text-secondary">Pair Board</Link>
+          <Link href="/showcase" className="transition-colors hover:text-secondary">Showcase</Link>
           <Link href="/manual" className="transition-colors hover:text-secondary">Manual mode</Link>
           <Link href="/setup" className="transition-colors hover:text-secondary">Setup</Link>
           <a

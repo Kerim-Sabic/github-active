@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getProviderToken } from "@/server/auth/provider-token";
 import {
+  BranchCollisionError,
   GitHubMutationError,
   closeIssue,
   createBranch,
@@ -13,6 +14,10 @@ import {
   sleep
 } from "@/server/github/mutations";
 import { ensureSandboxRepo } from "@/server/github/sandbox";
+
+function randomSuffix(): string {
+  return Math.random().toString(36).slice(2, 8);
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -147,22 +152,24 @@ async function runPullRequestFlow(input: {
   send: Send;
 }): Promise<void> {
   const { token, sandbox, count, kind, send } = input;
-  const baseSha = await getBranchSha(token, sandbox.owner, sandbox.repo, sandbox.defaultBranch);
   const ts = Date.now();
   const prefix = kind === "yolo" ? "yolo" : "ps";
 
   for (let i = 1; i <= count; i += 1) {
-    const branch = `bot/${prefix}-${ts}-${i}`;
-    const filePath = `entries/${prefix}-${ts}-${i}.md`;
-    const content = buildEntry({
-      kind,
-      index: i,
-      total: count,
-      ts
+    // Re-fetch the default branch tip on every iteration so each new branch
+    // is created from the latest merge, never a stale ancestor.
+    const baseSha = await getBranchSha(token, sandbox.owner, sandbox.repo, sandbox.defaultBranch);
+
+    const branch = await createBranchWithRetry({
+      token,
+      sandbox,
+      baseSha,
+      buildName: () => `bot/${prefix}-${ts}-${i}-${randomSuffix()}`,
+      send
     });
 
-    send("step", { phase: "branch", message: `branch ${branch} from ${sandbox.defaultBranch}` });
-    await createBranch(token, sandbox.owner, sandbox.repo, branch, baseSha);
+    const filePath = `entries/${prefix}-${ts}-${i}-${randomSuffix()}.md`;
+    const content = buildEntry({ kind, index: i, total: count, ts });
 
     send("step", { phase: "commit", message: `commit ${filePath}` });
     await putFile({
@@ -216,6 +223,31 @@ async function runPullRequestFlow(input: {
   });
 }
 
+async function createBranchWithRetry(input: {
+  token: string;
+  sandbox: Sandbox;
+  baseSha: string;
+  buildName: () => string;
+  send: Send;
+}): Promise<string> {
+  const { token, sandbox, baseSha, buildName, send } = input;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const branch = buildName();
+    try {
+      send("step", { phase: "branch", message: `branch ${branch} from ${sandbox.defaultBranch}` });
+      await createBranch(token, sandbox.owner, sandbox.repo, branch, baseSha);
+      return branch;
+    } catch (error) {
+      if (error instanceof BranchCollisionError && attempt < 2) {
+        send("step", { phase: "branch-retry", message: `branch ${branch} collided, regenerating name` });
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("could not allocate a unique sandbox branch name after 3 attempts");
+}
+
 async function runQuickdraw(input: { token: string; sandbox: Sandbox; send: Send }): Promise<void> {
   const { token, sandbox, send } = input;
   send("step", { phase: "issue", message: "open issue" });
@@ -266,11 +298,14 @@ async function runPairExtraordinaire(input: {
 
   const baseSha = await getBranchSha(token, sandbox.owner, sandbox.repo, sandbox.defaultBranch);
   const ts = Date.now();
-  const branch = `bot/pair-${ts}`;
-  const filePath = `entries/pair-${ts}.md`;
-
-  send("step", { phase: "branch", message: `branch ${branch}` });
-  await createBranch(token, sandbox.owner, sandbox.repo, branch, baseSha);
+  const branch = await createBranchWithRetry({
+    token,
+    sandbox,
+    baseSha,
+    buildName: () => `bot/pair-${ts}-${randomSuffix()}`,
+    send
+  });
+  const filePath = `entries/pair-${ts}-${randomSuffix()}.md`;
 
   const message = [
     `feat: pair entry with @${partner.login}`,
