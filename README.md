@@ -1,144 +1,177 @@
+<div align="center">
+
 # GitHub Active
 
-> A Netlify-native command center for transparent developer journal automation on user-owned GitHub repositories.
+### Earn GitHub achievements at the click of a button. Your sandbox repo does the work.
 
-[![Live](https://img.shields.io/badge/live-githubactive.netlify.app-23C55E?style=for-the-badge)](https://githubactive.netlify.app)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
-[![Netlify](https://img.shields.io/badge/Netlify-Scheduled%20Workers-00AD9F?style=for-the-badge&logo=netlify)](https://www.netlify.com)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-22C55E?style=for-the-badge)](./LICENSE)
+[![Live](https://img.shields.io/badge/live-githubactive.netlify.app-22C55E?style=flat-square)](https://githubactive.netlify.app)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org)
+[![Supabase Auth](https://img.shields.io/badge/Supabase-Auth-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Tailwind v4](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![BSD-3](https://img.shields.io/badge/license-BSD--3--Clause-blue?style=flat-square)](./LICENSE)
 
-GitHub Active turns a local activity bot into a public SaaS surface with GitHub App auth, deterministic commit previews, retry-safe scheduled workers, audit history, and a technical dashboard that makes automation explicit instead of hidden.
+</div>
 
-It is designed for developer journaling, learning logs, and transparent repository activity in repos the user owns or intentionally selects. It does **not** support hidden backdating, fake achievement farming, synthetic stars, spam pull requests, or deceptive contribution claims.
+---
 
-## Product Surface
+GitHub Active is a one-click runner for the GitHub achievements that *can* be auto-earned, and an honest field guide for the ones that can&apos;t.
 
-- **Public app:** minimal technical landing page with animated GitHub-style activity tiles.
-- **Dashboard:** repository health, schedule controls, previews, run-now, pause/resume, and recent jobs.
-- **Setup console:** redacted production readiness for GitHub App, Netlify Database, session secrets, and worker secrets.
-- **Connect screen:** clear Automatic mode vs Manual mode instead of a raw production-credentials error.
-- **Supabase GitHub sign-in:** optional Supabase Auth session for user identity, separate from repository write access.
-- **Manual mode:** fine-grained token validation and one transparent journal commit, without storing tokens.
-- **Achievement Lab:** ethical profile-growth roadmap plus a working profile README updater for real GitHub profile improvement.
+Sign in with GitHub. Click **Pull Shark**. The app creates branches, opens PRs, and squash-merges them inside a dedicated `github-active-sandbox` repo on your account. GitHub awards the achievement minutes later.
 
-## Architecture
-
-```text
-Next.js App Router
-  -> GitHub App install / OAuth callback
-  -> Drizzle ORM / Netlify Database
-  -> Netlify Scheduled Function dispatcher
-  -> Netlify Background Function commit worker
-  -> GitHub Contents API
+```
+00:00  resolving sandbox repo
+00:01  branch bot/ps-1731-1 created from main
+00:02  entries/ps-1731-1.md committed
+00:03  pr #142 opened
+00:04  pr #142 merged (squash)
+...
+00:09  done · 2 PRs merged · pull shark eta ~15m
 ```
 
-Core properties:
+## Three things it does
 
-- GitHub App installation tokens are generated on demand and never exposed to the browser.
-- Planned commits use deterministic seeds so previews match execution.
-- Worker execution is idempotent through unique planned-commit keys.
-- Setup status is redacted and safe to expose publicly.
-- Manual token mode validates credentials once and does not persist PATs.
+- **Achievement Lab** — one-click runners for **Pull Shark**, **YOLO**, **Quickdraw**, and **Pair Extraordinaire**. Real branches, real PRs, real merges. All confined to a `github-active-sandbox` repo so your real projects stay clean.
+- **Honest social section** — Galaxy Brain, Starstruck, Heart-on-Sleeve, and Public Sponsor *can&apos;t* be automated. The lab says so out loud and links you to the legitimate path for each.
+- **Profile polish** — opt-in `username/username` README writer for when you want a clean, structured profile landing page.
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the system model.
+It also ships an optional GitHub-App-powered scheduled-commit feature for transparent developer journaling — but the headline experience is the click-to-earn lab.
+
+## Achievements supported
+
+| Achievement | Tiers | Method | Status |
+| --- | --- | --- | --- |
+| **Pull Shark** | 1 / 2 / 16 / 128 / 1024 | One-click runner — branch + PR + squash merge × N | ✅ Auto |
+| **YOLO** | 1 | Same as Pull Shark, merged with zero reviews | ✅ Auto |
+| **Quickdraw** | 1 | Issue opened, then closed within seconds | ✅ Auto |
+| **Pair Extraordinaire** | 1 / 10 / 24 | Co-authored commit credited to a real GitHub user you name | ✅ Auto |
+| Galaxy Brain | 2 / 8 / 32 / 64 | Needs a maintainer to mark *your* answer accepted | ⚠ Social |
+| Starstruck | 16 / 128 / 512 / 4096 | Needs organic stars from real developers | ⚠ Social |
+| Heart On Your Sleeve | 10 / 50 / 500 / 4000 | Needs reactions from other users on *your* comments | ⚠ Social |
+| Public Sponsor | 1 | Real GitHub Sponsors payment to a real maintainer | ⚠ Social |
+
+## How it works
+
+```text
+                              ┌───────────────────────────────────────────────┐
+ you                          │  github-active                                │
+ ┌────────┐  Sign in (OAuth)  │  ┌─────────────────────────────────────────┐  │
+ │ GitHub │ ────────────────▶ │  │ Supabase Auth · provider_token (repo)   │  │
+ └────────┘ ◀──────────────── │  └─────────────────────────────────────────┘  │
+                              │                  │                            │
+                              │                  ▼                            │
+                              │  ┌─────────────────────────────────────────┐  │
+                              │  │ POST /api/achievements/run · SSE stream │  │
+                              │  └─────────────────────────────────────────┘  │
+                              │                  │                            │
+                              │                  ▼                            │
+ ┌─────────────────────────┐  │  ┌─────────────────────────────────────────┐  │
+ │ github-active-sandbox   │ ◀── ┤ branches · PRs · merges · issues        │  │
+ │ (auto-created)          │  │  └─────────────────────────────────────────┘  │
+ └─────────────────────────┘  └───────────────────────────────────────────────┘
+                  │
+                  ▼
+       GitHub awards the achievement (~15 min)
+```
+
+The OAuth `provider_token` lives only in your Supabase session cookie. It is never written to our database. Lab actions run server-side per click — there is no background worker, no scheduled job, and no stored credential.
+
+## 60-second start
+
+```bash
+# 1. clone
+git clone https://github.com/Kerim-Sabic/github-active.git
+cd github-active
+
+# 2. fill four env vars
+cp .env.example .env.local
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+#   APP_URL=http://localhost:3000
+#   SESSION_SECRET (32+ chars)
+
+# 3. install + run
+npm install
+npm run dev
+```
+
+In your Supabase dashboard:
+
+1. **Auth → Providers → GitHub** — enable the provider with your GitHub OAuth app credentials.
+2. In the same panel, set **Additional Scopes** to: `read:user user:email repo`.
+   This is required — Supabase enforces a server-side allowlist; the client-side `scopes` parameter is not enough on its own.
+
+In your GitHub OAuth app settings, leave **"Expire user authorization tokens"** off (the default) so the same token keeps powering lab runs across visits.
+
+Open http://localhost:3000, click **Sign in with GitHub**, then **Open Achievement Lab**. Click **Run Pull Shark**. Done.
 
 ## Stack
 
 | Layer | Choice |
 | --- | --- |
-| App | Next.js App Router, React 19 |
-| Styling | Tailwind CSS v4, OKLCH tokens, lucide icons |
-| Validation | Zod schemas at API and domain boundaries |
-| Persistence | Drizzle ORM on Netlify Database / Postgres |
-| Jobs | Netlify Scheduled Functions and Background Functions |
-| Auth | GitHub App installation auth plus OAuth user authorization |
-| Tests | Vitest for scheduler, config, auth flow, setup status, policy logic |
+| App | Next.js 16 (App Router, Turbopack) · React 19 |
+| Styling | Tailwind CSS v4 · OKLCH tokens · Linear-flavored dark theme |
+| Auth | Supabase GitHub OAuth (`repo` scope) — primary; GitHub App available as advanced track |
+| GitHub API | Raw `fetch` + Zod schemas — no Octokit, no abstraction debt |
+| Persistence | Drizzle ORM on Postgres (Netlify DB / Supabase / self-hosted) |
+| Streaming | Server-Sent Events for live run console |
+| Tests | Vitest |
 
-## Production Setup
+## Project structure
 
-GitHub Active needs real production credentials before `Connect GitHub` can redirect to GitHub. If these are missing, the live app intentionally redirects to `/setup` instead of returning a blank 500.
-
-```env
-APP_URL=https://githubactive.netlify.app
-SESSION_SECRET=replace_with_at_least_32_random_characters
-INTERNAL_JOB_SECRET=replace_with_at_least_16_random_characters
-NETLIFY_DATABASE_URL=postgres_connection_string
-SUPABASE_DATABASE_URL=optional_supabase_postgres_connection_string
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_replace_me
-
-GITHUB_APP_SLUG=your-github-app-slug
-GITHUB_APP_ID=123456
-GITHUB_APP_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
-GITHUB_APP_CLIENT_SECRET=github_app_client_secret
-GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
 ```
-
-GitHub App settings:
-
-- Callback URL: `https://githubactive.netlify.app/api/github/callback`
-- Setup URL: `https://githubactive.netlify.app/api/github/callback`
-- Repository permissions: `Contents: Read and write`, `Metadata: Read`
-- User authorization: enabled
-
-Apply the schema:
-
-```bash
-psql "$NETLIFY_DATABASE_URL" -f drizzle/0000_initial.sql
+src/
+├── app/
+│   ├── achievements/             # /achievements — the Lab page + client + README form
+│   ├── api/
+│   │   ├── achievements/run/     # SSE orchestrator — one route, four flows
+│   │   ├── supabase/{github,callback}/
+│   │   └── github/{install,login,callback}/
+│   ├── connect/, dashboard/, manual/, setup/
+│   ├── layout.tsx                # Mounts the contribution-grid backdrop globally
+│   └── page.tsx                  # Landing
+├── server/
+│   ├── auth/
+│   │   ├── provider-token.ts     # Reads Supabase provider_token server-side
+│   │   └── supabase-session.ts
+│   └── github/
+│       ├── client.ts             # OAuth + Contents API + headers helper
+│       ├── mutations.ts          # branch / PR / issue / merge primitives (Zod-validated)
+│       └── sandbox.ts            # ensureSandboxRepo()
+├── shared/
+│   ├── achievement-goals.ts      # Single source of truth for the 10 goals
+│   └── ui/                       # button · card · input · badge · activity-backdrop
+└── utils/supabase/{server,client}.ts
 ```
-
-Full checklist: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md).
-
-## Local Development
-
-```bash
-npm install
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
-Without database and GitHub App env vars, the app renders demo dashboard data and setup guidance.
 
 ## Verification
 
 ```bash
-npm run typecheck
-npm run test
-npm run build
-npm audit
+npm run typecheck   # strict TS
+npm run test        # vitest
+npm run build       # next build (Turbopack)
 ```
 
-Expected current result:
+End-to-end manual check:
 
-- TypeScript passes.
-- Vitest passes.
-- Next.js production build passes.
-- npm audit reports no moderate-or-higher vulnerabilities.
+1. `npm run dev`, sign in with GitHub.
+2. `/achievements` → click Run on Pull Shark with count = 2.
+3. SSE log streams: branch → commit → PR opened → merged. Twice.
+4. Visit `https://github.com/<your-login>/github-active-sandbox/pulls?q=is:merged`.
+5. Wait ~15 minutes, check `https://github.com/<your-login>?tab=achievements`.
 
-## Repository Quality
+## Why this exists
 
-This repo includes:
+Most "GitHub achievement bot" projects are either:
 
-- CI workflow for typecheck, tests, build, and audit.
-- Issue templates for bugs and feature requests.
-- Pull request template with validation checklist.
-- Security policy and contribution guide.
-- Architecture, deployment, manual mode, and Achievement Lab documentation.
+- Vanity scripts that spam fake stars and follows (will get your account banned), or
+- Documentation that says "go participate in open source" and stops there.
 
-## Safety Positioning
+GitHub Active is the small overlap: the achievements that GitHub awards purely for *your own* repo activity get a real, transparent runner. The achievements that genuinely need other humans get a clear explanation and a link to the legitimate way to earn them.
 
-GitHub Active is for transparent developer journaling and user-owned repositories. Users explicitly select repositories, preview generated content, configure schedules, and keep audit records.
-
-Achievement Lab is an ethical roadmap for profile quality. It can create a real profile README commit in the user's own `username/username` repository and helps users understand legitimate profile signals and visibility settings; it does not automate badge manipulation or spam behavior.
+No fake stars. No spam PRs in repos you don&apos;t own. No daemon polling your account. Just one click → real PRs → real merges → real badges, contained in a repo you can delete at any time.
 
 ## License
 
-Licensed under the [BSD 3-Clause License](./LICENSE).
+[BSD 3-Clause](./LICENSE) — built by [Kerim-Sabic](https://github.com/Kerim-Sabic).
 
-Copyright notices and attribution to `Kerim-Sabic` must be preserved in redistributions, forks, and substantial portions of the software.
+If you fork or substantially redistribute, please keep the attribution intact.

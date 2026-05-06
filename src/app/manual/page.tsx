@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, Database, GitCommit, Github, KeyRound, LockKeyhole, ShieldCheck, SquareTerminal } from "lucide-react";
-import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
@@ -8,9 +7,8 @@ import { ManualModeClient } from "./manual-mode-client";
 
 export default function ManualModePage() {
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-surface">
-      <ActivityBackdrop density="console" />
-      <header className="relative z-20 border-b border-border bg-surface/90 backdrop-blur">
+    <main className="relative z-10 min-h-screen">
+      <header className="border-b border-border bg-surface/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
             <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface-raised">

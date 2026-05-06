@@ -13,17 +13,17 @@ export function Input({
   const inputId = id ?? props.name ?? label.toLowerCase().replace(/\s+/g, "-");
 
   return (
-    <label className="grid gap-2 text-sm text-secondary" htmlFor={inputId}>
-      <span className="font-medium text-primary">{label}</span>
+    <label className="grid gap-1.5 text-sm text-secondary" htmlFor={inputId}>
+      <span className="text-[12px] font-medium text-primary">{label}</span>
       <input
         id={inputId}
         className={cn(
-          "h-10 rounded-md border border-border bg-surface px-3 text-sm text-primary outline-none transition-colors placeholder:text-tertiary focus:border-accent focus:ring-2 focus:ring-accent-muted",
+          "h-9 rounded-md border border-border bg-surface px-3 text-[13px] text-primary outline-none transition-colors placeholder:text-tertiary focus:border-accent focus:ring-0",
           className
         )}
         {...props}
       />
-      {helper ? <span className="text-xs text-tertiary">{helper}</span> : null}
+      {helper ? <span className="text-[11px] text-tertiary">{helper}</span> : null}
     </label>
   );
 }

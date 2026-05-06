@@ -1,321 +1,331 @@
 import Link from "next/link";
 import {
-  Activity,
   ArrowRight,
-  CalendarClock,
-  CheckCircle2,
-  Github,
+  Check,
+  GitMerge,
   GitPullRequest,
-  LockKeyhole,
-  Play,
-  SquareTerminal,
-  ServerCog,
+  Github,
+  MessagesSquare,
   ShieldCheck,
-  TimerReset,
+  Sparkles,
+  Star,
+  Timer,
+  Users,
   Zap
 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { getSetupStatus } from "@/server/setup/status";
 
-const platformSignals = [
-  { label: "Scheduled dispatcher", value: "10m", icon: CalendarClock },
-  { label: "Background worker", value: "15m", icon: ServerCog },
-  { label: "Install token TTL", value: "1h", icon: LockKeyhole },
-  { label: "Retry guard", value: "unique", icon: ShieldCheck }
-];
+const heroAchievements = [
+  { name: "Pull Shark", icon: GitPullRequest, kind: "auto" },
+  { name: "YOLO", icon: Zap, kind: "auto" },
+  { name: "Quickdraw", icon: Timer, kind: "auto" },
+  { name: "Pair Extraordinaire", icon: Users, kind: "auto" }
+] as const;
 
-const productPoints = [
-  "GitHub App installation with selected repository access",
-  "Deterministic previews before background workers write",
-  "Audit trail for schedules, runs, failures, and commit links",
-  "Netlify-hosted jobs that keep running after this device is off"
-];
+const features = [
+  {
+    title: "One-click achievement runner",
+    body: "Click Pull Shark and the app actually creates branches, opens PRs, and merges them in your sandbox repo. Real commits, real merges, real GitHub achievements.",
+    icon: GitMerge
+  },
+  {
+    title: "Sandbox-isolated by default",
+    body: "All automation runs against a dedicated github-active-sandbox repo on your account. Your real projects stay clean.",
+    icon: ShieldCheck
+  },
+  {
+    title: "Sign in with GitHub. That is it.",
+    body: "Supabase OAuth handles auth. The repo scope token powers the lab. No PATs to paste, no GitHub App to install.",
+    icon: Github
+  }
+] as const;
+
+const automatableList = [
+  ["Pull Shark", "1 / 2 / 16 / 128 / 1024 merged PRs"],
+  ["YOLO", "Merge a PR with zero reviews"],
+  ["Quickdraw", "Close an issue or PR within 5 minutes"],
+  ["Pair Extraordinaire", "Co-authored commit with another GitHub user"]
+] as const;
+
+const socialList = [
+  ["Galaxy Brain", "Needs accepted answers from real maintainers"],
+  ["Starstruck", "Needs organic stars from real developers"],
+  ["Heart On Sleeve", "Needs reactions from other users on your comments"],
+  ["Public Sponsor", "Requires a real GitHub Sponsors payment"]
+] as const;
 
 export default function HomePage() {
   const setup = getSetupStatus();
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-surface">
-      <ActivityBackdrop />
-      <header className="sticky top-0 z-20 border-b border-border bg-surface/88 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link href="/" className="flex items-center gap-3" aria-label="GitHub Active home">
-            <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface-raised">
-              <Activity aria-hidden="true" className="h-5 w-5 text-accent" />
-            </span>
-            <span className="text-sm font-semibold text-primary">GitHub Active</span>
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm text-secondary md:flex" aria-label="Primary navigation">
-            <a href="#platform" className="hover:text-primary">Platform</a>
-            <a href="#workflow" className="hover:text-primary">Workflow</a>
-            <a href="/achievements" className="hover:text-primary">Achievement Lab</a>
-            <a href="/manual" className="hover:text-primary">Manual mode</a>
-            <a href="#trust" className="hover:text-primary">Trust</a>
-          </nav>
-          <Button asChild size="sm" variant="secondary">
-            <Link href="/dashboard">Open console</Link>
-          </Button>
-        </div>
-      </header>
+    <main className="relative z-10 min-h-screen">
+      <SiteHeader />
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-5 py-8 lg:grid-cols-[0.82fr_1.18fr]">
-        <div className="max-w-2xl">
-          <StatusStrip ready={setup.canStartGitHubAuth} missing={setup.missing.length} />
-          <h1 className="mt-6 text-5xl font-semibold leading-tight text-primary md:text-7xl">
-            GitHub Active
+      <section className="mx-auto grid max-w-6xl gap-16 px-6 pb-24 pt-20 lg:pt-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <Badge tone="success" className="mx-auto mb-6 inline-flex">
+            <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-success" />
+            {setup.supabaseReady ? "Live • sign in with GitHub" : "Public beta"}
+          </Badge>
+          <h1 className="bg-gradient-to-b from-primary to-primary/70 bg-clip-text text-5xl font-semibold leading-[1.05] tracking-tight text-transparent md:text-7xl">
+            Earn GitHub achievements
+            <br />
+            at the click of a button.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-secondary">
-            A public Netlify command center for transparent developer journal automation on user-owned GitHub repositories.
-            Users install a GitHub App, preview the work, and let scheduled workers run continuously.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-7 text-secondary">
+            Sign in with GitHub. Click <span className="text-primary">Pull Shark</span>. Watch real PRs ship into a
+            sandbox repo on your account and unlock the badge — no PATs, no scripts, no spam.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <a href="/connect">
-                <Github aria-hidden="true" className="h-5 w-5" />
-                Connect GitHub
+              <a href={setup.supabaseReady ? "/api/supabase/github" : "/connect"}>
+                <Github aria-hidden="true" className="h-4 w-4" />
+                Sign in with GitHub
               </a>
             </Button>
             <Button asChild size="lg" variant="secondary">
-              <Link href="/dashboard">
-                View console
-                <ArrowRight aria-hidden="true" className="h-5 w-5" />
+              <Link href="/achievements">
+                Open Achievement Lab
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="secondary">
-              <a href="/achievements">Achievement Lab</a>
-            </Button>
           </div>
-          <div className="mt-8 grid gap-3 text-sm text-secondary sm:grid-cols-2">
-            {productPoints.map((point) => (
-              <div key={point} className="flex items-start gap-2 rounded-md border border-border bg-surface-raised/74 p-3 backdrop-blur">
-                <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                <span>{point}</span>
-              </div>
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            {heroAchievements.map(({ name, icon: Icon }) => (
+              <span
+                key={name}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-raised/70 px-3 py-1.5 text-[12px] text-secondary backdrop-blur-[2px]"
+              >
+                <Icon aria-hidden="true" className="h-3.5 w-3.5 text-accent" />
+                {name}
+              </span>
             ))}
           </div>
-          <LiveActivityStrip />
         </div>
 
-        <ConsolePreview />
+        <DemoConsole />
       </section>
 
-      <section id="platform" className="relative z-10 border-y border-border bg-surface-muted/70">
-        <div className="mx-auto grid max-w-7xl gap-3 px-5 py-5 md:grid-cols-4">
-          {platformSignals.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-lg border border-border bg-surface-raised p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <Icon aria-hidden="true" className="h-5 w-5 text-accent" />
-                <span className="h-2 w-2 rounded-full bg-success" />
-              </div>
-              <p className="font-mono text-2xl text-primary">{value}</p>
-              <p className="mt-1 text-sm text-secondary">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="workflow" className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 py-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <Badge tone="accent" className="mb-4">Workflow</Badge>
-          <h2 className="text-3xl font-semibold text-primary md:text-4xl">Built like an ops surface, not a toy bot.</h2>
-        </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          {[
-            ["Install", "Users grant selected repository access through a GitHub App."],
-            ["Preview", "The next file path, message, and content are visible before execution."],
-            ["Run", "Netlify queues idempotent work and records the resulting commit."]
-          ].map(([title, copy]) => (
-            <article key={title} className="rounded-lg border border-border bg-surface-raised p-5">
-              <h3 className="text-lg font-semibold text-primary">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-secondary">{copy}</p>
+      <section id="features" className="border-t border-border bg-surface/60 backdrop-blur-[2px]">
+        <div className="mx-auto grid max-w-6xl gap-6 px-6 py-20 md:grid-cols-3">
+          {features.map(({ title, body, icon: Icon }) => (
+            <article key={title} className="rounded-lg border border-border bg-surface-raised/70 p-6 backdrop-blur-[2px]">
+              <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-accent">
+                <Icon aria-hidden="true" className="h-4 w-4" />
+              </span>
+              <h3 className="mt-5 text-base font-semibold text-primary">{title}</h3>
+              <p className="mt-2 text-[13px] leading-6 text-secondary">{body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
-        <div className="grid gap-5 rounded-lg border border-border bg-surface-raised p-5 lg:grid-cols-[0.8fr_1.2fr]">
+      <section id="achievements" className="border-t border-border">
+        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2">
           <div>
-            <Badge tone="success" className="mb-4">Profile growth</Badge>
-            <h2 className="text-2xl font-semibold text-primary">Achievement Lab without fake achievement farming.</h2>
-            <p className="mt-2 text-secondary">
-              Guide users toward real profile signals: clean repositories, strong docs, useful pull requests,
-              visible achievements, and transparent contribution settings.
+            <Badge tone="success" className="mb-4">Automatable</Badge>
+            <h2 className="text-2xl font-semibold tracking-tight text-primary">
+              Four achievements. One click each.
+            </h2>
+            <p className="mt-3 text-[13px] leading-7 text-secondary">
+              These run inside <span className="font-mono text-primary">github-active-sandbox</span> — a dedicated repo
+              the app creates on your account the first time you click Run.
             </p>
+            <ul className="mt-6 grid gap-2.5">
+              {automatableList.map(([name, body]) => (
+                <li
+                  key={name}
+                  className="flex items-start gap-3 rounded-md border border-border bg-surface-raised/70 px-4 py-3 backdrop-blur-[2px]"
+                >
+                  <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                  <div>
+                    <p className="text-[13px] font-medium text-primary">{name}</p>
+                    <p className="mt-0.5 text-[12px] text-secondary">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {["Profile README", "Repository hygiene", "Collaboration quality"].map((item) => (
-              <div key={item} className="rounded-md border border-border bg-surface p-4">
-                <CheckCircle2 aria-hidden="true" className="mb-3 h-5 w-5 text-success" />
-                <p className="text-sm font-medium text-primary">{item}</p>
-              </div>
-            ))}
+
+          <div>
+            <Badge tone="warning" className="mb-4">Social — needs other humans</Badge>
+            <h2 className="text-2xl font-semibold tracking-tight text-primary">
+              The honest part: some can&apos;t be automated.
+            </h2>
+            <p className="mt-3 text-[13px] leading-7 text-secondary">
+              The lab is upfront about achievements that depend on other people. We point you at the legitimate way to
+              earn each one instead of pretending we can fake it.
+            </p>
+            <ul className="mt-6 grid gap-2.5">
+              {socialList.map(([name, body]) => (
+                <li
+                  key={name}
+                  className="flex items-start gap-3 rounded-md border border-border bg-surface-raised/70 px-4 py-3 backdrop-blur-[2px]"
+                >
+                  <Star aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-tertiary" />
+                  <div>
+                    <p className="text-[13px] font-medium text-primary">{name}</p>
+                    <p className="mt-0.5 text-[12px] text-secondary">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 pb-12">
-        <div className="rounded-lg border border-border bg-surface-raised p-5 md:flex md:items-center md:justify-between">
-          <div>
-            <Badge tone="success" className="mb-4">Transparent automation</Badge>
-            <h2 className="text-2xl font-semibold text-primary">No PATs, no hidden remotes, no deceptive backdating.</h2>
-            <p className="mt-2 max-w-2xl text-secondary">
-              GitHub Active writes explicit developer journal content into repositories users choose and can inspect.
-            </p>
-          </div>
-          <Button asChild className="mt-5 md:mt-0">
-            <a href="/connect">
-              <Github aria-hidden="true" className="h-4 w-4" />
-              Connect GitHub
-            </a>
-          </Button>
+      <section id="how" className="border-t border-border bg-surface/60 backdrop-blur-[2px]">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <h2 className="text-2xl font-semibold tracking-tight text-primary">How it works</h2>
+          <p className="mt-3 max-w-2xl text-[13px] leading-7 text-secondary">
+            Four steps. No background daemon, no stored credentials, no surprises.
+          </p>
+          <ol className="mt-10 grid gap-3 md:grid-cols-4">
+            {[
+              ["01", "Sign in", "Supabase GitHub OAuth with the repo scope."],
+              ["02", "Pick", "Choose Pull Shark, YOLO, Quickdraw, or Pair Extraordinaire."],
+              ["03", "Run", "The app creates branches, files, PRs, and merges them in your sandbox."],
+              ["04", "Earned", "GitHub awards the achievement — usually within 15 minutes."]
+            ].map(([step, title, body]) => (
+              <li key={step} className="rounded-lg border border-border bg-surface-raised/70 p-5 backdrop-blur-[2px]">
+                <span className="font-mono text-[11px] text-accent">{step}</span>
+                <h3 className="mt-3 text-[13px] font-semibold text-primary">{title}</h3>
+                <p className="mt-1.5 text-[12px] leading-6 text-secondary">{body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }
 
-function StatusStrip({ ready, missing }: { ready: boolean; missing: number }) {
+function SiteHeader() {
   return (
-    <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-raised/90 p-2 shadow-soft backdrop-blur">
-      <Badge tone={ready ? "success" : "warning"}>{ready ? "Live auth ready" : `${missing} setup items`}</Badge>
-      <span className="font-mono text-xs text-tertiary">githubactive.netlify.app</span>
-    </div>
+    <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="GitHub Active home">
+          <span className="grid h-7 w-7 place-items-center rounded-md border border-border bg-surface-raised">
+            <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-accent" />
+          </span>
+          <span className="text-[13px] font-semibold tracking-tight text-primary">GitHub Active</span>
+        </Link>
+        <nav className="hidden items-center gap-6 text-[12px] text-secondary md:flex" aria-label="Primary">
+          <a href="#features" className="transition-colors hover:text-primary">Features</a>
+          <a href="#achievements" className="transition-colors hover:text-primary">Achievements</a>
+          <a href="#how" className="transition-colors hover:text-primary">How it works</a>
+          <Link href="/dashboard" className="transition-colors hover:text-primary">Dashboard</Link>
+          <a
+            href="https://github.com/Kerim-Sabic/github-active"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-primary"
+          >
+            GitHub
+          </a>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link href="/achievements">Lab</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/connect">
+              <Github aria-hidden="true" className="h-3.5 w-3.5" />
+              Sign in
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </header>
   );
 }
 
-function LiveActivityStrip() {
+function SiteFooter() {
   return (
-    <div className="mt-6 grid gap-2 rounded-lg border border-border bg-surface-raised/76 p-3 shadow-soft backdrop-blur">
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-xs text-tertiary">activity signal</span>
-        <span className="flex items-center gap-2 text-xs text-success">
-          <span className="h-2 w-2 rounded-full bg-success" />
-          animated contribution field
-        </span>
+    <footer className="border-t border-border">
+      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-6 py-10 text-[12px] text-tertiary md:flex-row md:items-center">
+        <p>
+          Built by{" "}
+          <a
+            className="text-secondary transition-colors hover:text-primary"
+            href="https://github.com/Kerim-Sabic"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Kerim-Sabic
+          </a>
+          {" "}— BSD-3-Clause licensed.
+        </p>
+        <div className="flex items-center gap-5">
+          <a
+            href="https://github.com/Kerim-Sabic/github-active"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-secondary"
+          >
+            Source
+          </a>
+          <Link href="/manual" className="transition-colors hover:text-secondary">Manual mode</Link>
+          <Link href="/setup" className="transition-colors hover:text-secondary">Setup</Link>
+          <a
+            href="https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/customizing-your-profile/personalizing-your-profile#displaying-badges-on-your-profile"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-secondary"
+          >
+            GitHub badges docs
+          </a>
+        </div>
       </div>
-      <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-1">
-        {Array.from({ length: 24 }, (_, index) => (
-          <span
-            key={index}
-            className={`h-3 rounded-[3px] border border-success-muted/40 ${
-              index % 7 === 0
-                ? "bg-success"
-                : index % 5 === 0
-                  ? "bg-accent"
-                  : index % 3 === 0
-                    ? "bg-success-muted"
-                    : "bg-surface-muted"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
+    </footer>
   );
 }
 
-function ConsolePreview() {
-  const days = Array.from({ length: 7 * 17 }, (_, index) => index);
-
+function DemoConsole() {
   return (
-    <div className="rounded-lg border border-border bg-surface-raised/94 p-3 shadow-panel backdrop-blur">
-      <div className="technical-grid scanline rounded-md border border-border bg-surface-inset p-4 shadow-active">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface-raised">
-              <SquareTerminal aria-hidden="true" className="h-5 w-5 text-accent" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-primary">activity-control-plane</p>
-              <p className="font-mono text-xs text-tertiary">installation: selected repositories</p>
-            </div>
+    <div className="mx-auto w-full max-w-4xl">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface-raised/85 shadow-[0_30px_120px_-30px_oklch(72%_0.18_150_/_0.18)] backdrop-blur-[3px]">
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
+            <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+            <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
           </div>
-          <Badge tone="success">Operational</Badge>
+          <span className="font-mono text-[11px] text-tertiary">github-active.run · pull-shark</span>
+          <span className="font-mono text-[11px] text-success">live</span>
         </div>
-
-        <div className="grid gap-4 py-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-secondary">Activity heatmap</span>
-              <span className="font-mono text-xs text-success">next run 37m</span>
-            </div>
-            <div className="grid grid-flow-col grid-rows-7 gap-1.5">
-              {days.map((day) => (
-                <span
-                  key={day}
-                  className="aspect-square rounded-[4px] border border-border shadow-[inset_0_1px_0_oklch(100%_0_0_/_0.08)]"
-                  style={{
-                    background:
-                      day % 19 === 0
-                        ? "var(--color-success)"
-                        : day % 13 === 0
-                          ? "var(--color-accent)"
-                          : day % 4 === 0 || day % 7 === 0
-                            ? "var(--color-success-muted)"
-                            : "var(--color-surface-muted)"
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            {[
-              { name: "scheduler-dispatcher", status: "due scan", icon: CalendarClock },
-              { name: "execute-commit-background", status: "accepted", icon: Play },
-              { name: "contents api", status: "write-ready", icon: GitPullRequest },
-              { name: "idempotency", status: "locked", icon: ShieldCheck }
-            ].map(({ name, status, icon: Icon }) => (
-              <div key={name} className="flex items-center justify-between rounded-md border border-border bg-surface-raised/88 p-3">
-                <div className="flex items-center gap-2">
-                  <Icon aria-hidden="true" className="h-4 w-4 text-accent" />
-                  <span className="font-mono text-xs text-secondary">{name}</span>
-                </div>
-                <span className="text-xs text-success">{status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-[0.92fr_1.08fr]">
-          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-secondary">
-              <TimerReset aria-hidden="true" className="h-4 w-4 text-accent" />
-              Schedule envelope
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Metric label="Timezone" value="Europe/Warsaw" />
-              <Metric label="Intensity" value="steady" />
-              <Metric label="Catch-up" value="limited" />
-              <Metric label="Tracks" value="3 active" />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface-raised/88 p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-secondary">
-              <Zap aria-hidden="true" className="h-4 w-4 text-accent" />
-              Commit preview
-            </div>
-            <pre className="max-h-40 overflow-hidden whitespace-pre-wrap font-mono text-xs leading-6 text-secondary">{`docs/journal/2026-05-04-token-rotation.md
-
-## Token Rotation
-- Mapped GitHub App installation token boundaries.
-- Added retry-safe commit idempotency keys.
-- Verified author identity remains explicit.`}</pre>
-          </div>
+        <div className="grid gap-2 px-5 py-5 font-mono text-[12px] leading-6">
+          <DemoLine ts="00:00" body="resolving sandbox repo" status="ok" />
+          <DemoLine ts="00:01" body="branch bot/ps-1731-1 created from main" status="ok" />
+          <DemoLine ts="00:02" body="entries/ps-1731-1.md committed" status="ok" />
+          <DemoLine ts="00:03" body="pr #142 opened" status="ok" />
+          <DemoLine ts="00:04" body="pr #142 merged (squash)" status="ok" />
+          <DemoLine ts="00:05" body="branch bot/ps-1731-2 created from main" status="ok" />
+          <DemoLine ts="00:06" body="entries/ps-1731-2.md committed" status="ok" />
+          <DemoLine ts="00:07" body="pr #143 opened" status="ok" />
+          <DemoLine ts="00:08" body="pr #143 merged (squash)" status="ok" />
+          <DemoLine ts="00:09" body="done · 2 PRs merged · pull shark eta ~15m" status="done" />
         </div>
       </div>
     </div>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function DemoLine({ ts, body, status }: { ts: string; body: string; status: "ok" | "done" }) {
   return (
-    <div className="rounded-md border border-border bg-surface p-3">
-      <p className="font-mono text-xs text-tertiary">{label}</p>
-      <p className="mt-1 text-sm font-medium text-primary">{value}</p>
+    <div className="flex items-baseline gap-3">
+      <span className="text-tertiary">{ts}</span>
+      {status === "done" ? (
+        <Sparkles aria-hidden="true" className="h-3.5 w-3.5 self-center text-accent" />
+      ) : (
+        <MessagesSquare aria-hidden="true" className="h-3.5 w-3.5 self-center text-secondary" />
+      )}
+      <span className={status === "done" ? "text-accent" : "text-secondary"}>{body}</span>
     </div>
   );
 }

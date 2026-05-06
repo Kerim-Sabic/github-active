@@ -29,7 +29,6 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
-import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import { type DashboardData } from "@/server/db/demo-data";
 import {
   CatchUpPolicySchema,
@@ -215,9 +214,8 @@ export function DashboardShell({
   }
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-surface">
-      <ActivityBackdrop density="console" />
-      <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
+    <main className="relative z-10 min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-border bg-surface/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-md border border-border bg-surface-raised">

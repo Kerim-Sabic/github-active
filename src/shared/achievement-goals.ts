@@ -1,181 +1,223 @@
 import {
   BookOpenCheck,
-  Code2,
   GitPullRequest,
   HeartHandshake,
   Lightbulb,
   MessageSquare,
   Sparkles,
   Star,
-  Users
+  Timer,
+  Users,
+  Zap
 } from "lucide-react";
 
-export const achievementGoals = [
-  {
-    id: "profile-readme",
-    title: "Profile README",
-    label: "Foundation",
-    difficulty: "Easy",
-    signal: "A clear username/username README that explains current work, stack, and proof links.",
-    actions: [
-      "Create the username/username repository if it does not exist.",
-      "Write a concise profile README with current focus, featured work, and operating principles.",
-      "Keep the README factual and update it when your public work changes."
-    ],
-    evidence: "Visible profile README commit",
-    icon: BookOpenCheck
-  },
+export type AchievementKind = "automatable" | "social" | "manual";
+export type AchievementAutomation = "pull-shark" | "yolo" | "quickdraw" | "pair-extraordinaire";
+
+export type AchievementGoal = {
+  id: string;
+  title: string;
+  label: string;
+  difficulty: string;
+  signal: string;
+  actions: readonly string[];
+  evidence: string;
+  kind: AchievementKind;
+  automation?: AchievementAutomation;
+  tiers?: readonly number[];
+  socialReason?: string;
+  socialAction?: { label: string; href: string };
+  icon: typeof GitPullRequest;
+};
+
+export const achievementGoals: readonly AchievementGoal[] = [
   {
     id: "pull-shark",
     title: "Pull Shark",
     label: "Pull requests",
-    difficulty: "Medium",
-    signal: "Meaningful pull requests that get merged into real repositories.",
+    difficulty: "Auto",
+    signal: "Open and merge pull requests in a real repository.",
     actions: [
-      "Find small issues in repositories you actually use.",
-      "Open focused pull requests with tests, screenshots, or reproduction notes.",
-      "Respond to review feedback and keep each PR easy to verify."
+      "Lab creates a branch in your github-active-sandbox repo.",
+      "Lab commits a journal file, opens a PR, and squash-merges it.",
+      "Repeat for every PR in the run (default 2, max 16 per click)."
     ],
-    evidence: "Merged pull requests",
+    evidence: "Merged pull requests in your sandbox repo",
+    kind: "automatable",
+    automation: "pull-shark",
+    tiers: [1, 2, 16, 128, 1024],
     icon: GitPullRequest
   },
   {
-    id: "galaxy-brain",
-    title: "Galaxy Brain",
-    label: "Discussions",
-    difficulty: "Medium",
-    signal: "Helpful answers in GitHub Discussions that maintainers or users accept.",
+    id: "yolo",
+    title: "YOLO",
+    label: "Pull requests",
+    difficulty: "Auto",
+    signal: "Merge a pull request without requesting any reviews.",
     actions: [
-      "Answer questions where you can provide accurate implementation detail.",
-      "Link to docs, source files, or minimal examples instead of guessing.",
-      "Follow up when the asker clarifies the problem."
+      "Same flow as Pull Shark, but the PR is merged immediately with zero reviewers.",
+      "GitHub awards YOLO when reviews_count = 0 at merge time."
     ],
-    evidence: "Accepted discussion answers",
-    icon: MessageSquare
+    evidence: "PR merged with no reviewers",
+    kind: "automatable",
+    automation: "yolo",
+    icon: Zap
   },
   {
-    id: "starstruck",
-    title: "Starstruck",
-    label: "Repository value",
-    difficulty: "Hard",
-    signal: "A repository useful enough that other developers star it organically.",
+    id: "quickdraw",
+    title: "Quickdraw",
+    label: "Speed",
+    difficulty: "Auto",
+    signal: "Close an issue or pull request within 5 minutes of opening it.",
     actions: [
-      "Polish one public repository so its value is obvious in the first viewport.",
-      "Add a fast demo, clean README, install steps, screenshots, and a roadmap.",
-      "Share the project in relevant communities without star swaps or spam."
+      "Lab opens an issue in the sandbox repo.",
+      "Lab closes the issue a couple of seconds later — well under the 5-minute window."
     ],
-    evidence: "Organic repository stars",
-    icon: Star
+    evidence: "Issue closed within 5 minutes",
+    kind: "automatable",
+    automation: "quickdraw",
+    icon: Timer
   },
   {
     id: "pair-extraordinaire",
     title: "Pair Extraordinaire",
     label: "Collaboration",
-    difficulty: "Medium",
-    signal: "Real co-authored work with another developer.",
+    difficulty: "Auto",
+    signal: "Co-author a commit with another GitHub user.",
     actions: [
-      "Pair on a scoped feature, bug fix, or documentation improvement.",
-      "Use GitHub's co-authored-by trailer only when both people contributed.",
-      "Document the problem solved and verification performed."
+      "Provide the GitHub username of the developer you want to credit.",
+      "Lab fetches their public account, then commits with a Co-authored-by trailer."
     ],
-    evidence: "Co-authored commits",
+    evidence: "Co-authored commit landed",
+    kind: "automatable",
+    automation: "pair-extraordinaire",
     icon: Users
   },
   {
-    id: "developer-program",
-    title: "Developer Program Member",
-    label: "Platform",
-    difficulty: "Easy",
-    signal: "Participation in GitHub's developer ecosystem and API tooling.",
+    id: "galaxy-brain",
+    title: "Galaxy Brain",
+    label: "Discussions",
+    difficulty: "Social",
+    signal: "Have an answer accepted in a public GitHub Discussion.",
     actions: [
-      "Join the GitHub Developer Program with your real account.",
-      "Build or document a small GitHub API integration.",
-      "Link the integration from your profile or featured repository."
+      "Find a recent question in a project's Discussions tab.",
+      "Post a substantive answer with code references and minimal repros.",
+      "Wait for the maintainer or asker to mark your answer as accepted."
     ],
-    evidence: "Developer Program badge",
-    icon: Code2
+    evidence: "Maintainer-accepted discussion answer",
+    kind: "social",
+    socialReason:
+      "Galaxy Brain requires another GitHub user to mark your answer as the accepted solution. The lab cannot fake that — and trying to would just create empty Discussions in throwaway repos that GitHub does not count.",
+    socialAction: {
+      label: "Browse open Discussions",
+      href: "https://github.com/discussions"
+    },
+    icon: MessageSquare
   },
   {
-    id: "public-sponsor",
-    title: "Public Sponsor",
-    label: "Support",
-    difficulty: "Optional",
-    signal: "Visible support for open source maintainers through GitHub Sponsors.",
+    id: "starstruck",
+    title: "Starstruck",
+    label: "Stars",
+    difficulty: "Social",
+    signal: "Have a repository hit 16 / 128 / 512 / 4096 stars.",
     actions: [
-      "Sponsor a maintainer or project you genuinely rely on.",
-      "Keep the sponsorship public only if you are comfortable with that visibility.",
-      "Mention the project honestly when explaining your open source ecosystem."
+      "Polish one public repo so the value is obvious in the first viewport.",
+      "Add a clear README, screenshots, install steps, demo gif, and a roadmap.",
+      "Share it where the audience already lives — Hacker News, Reddit, Twitter, your network."
     ],
-    evidence: "Public sponsorship profile signal",
-    icon: HeartHandshake
+    evidence: "Organic stars from real developers",
+    kind: "social",
+    socialReason:
+      "Stars need to come from real GitHub accounts to count. Star-swap rings get banned, and the lab refuses to coordinate them.",
+    socialAction: {
+      label: "Read GitHub's repo discoverability guide",
+      href: "https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories"
+    },
+    icon: Star
   },
   {
     id: "heart-on-your-sleeve",
     title: "Heart On Your Sleeve",
     label: "Reactions",
-    difficulty: "Easy",
-    signal: "Genuine reactions that help maintainers triage useful issues, answers, and releases.",
+    difficulty: "Social",
+    signal: "Receive 10 / 50 / 500 / 4000 reactions across your comments.",
     actions: [
-      "React to issues, discussions, releases, or comments only when the reaction is meaningful.",
-      "Use reactions to signal reproducibility, appreciation, or priority without adding noise.",
-      "Avoid reaction bombing or coordinated engagement."
+      "Post genuinely helpful comments on issues, PRs, and discussions.",
+      "Triage reproduction bugs, share clean repros, propose fixes."
     ],
-    evidence: "Authentic public reactions",
-    icon: Lightbulb
+    evidence: "Reactions from other developers",
+    kind: "social",
+    socialReason:
+      "Reactions have to come from other users on your comments — the lab cannot react to itself.",
+    icon: HeartHandshake
+  },
+  {
+    id: "public-sponsor",
+    title: "Public Sponsor",
+    label: "Sponsorship",
+    difficulty: "Social",
+    signal: "Sponsor an open-source maintainer through GitHub Sponsors.",
+    actions: [
+      "Pick a maintainer or project you actually rely on.",
+      "Set up a recurring or one-time public sponsorship from your settings."
+    ],
+    evidence: "Public sponsorship on your profile",
+    kind: "social",
+    socialReason:
+      "Sponsoring is a real payment to a real human. The lab will not — and cannot — automate that for you.",
+    socialAction: {
+      label: "Open GitHub Sponsors",
+      href: "https://github.com/sponsors"
+    },
+    icon: Sparkles
+  },
+  {
+    id: "profile-readme",
+    title: "Profile README",
+    label: "Foundation",
+    difficulty: "Manual",
+    signal: "Publish a clear username/username README that explains your work.",
+    actions: [
+      "The lab writes a structured README into your username/username repo.",
+      "You stay in control of the headline, focus, and featured project."
+    ],
+    evidence: "Visible profile README commit",
+    kind: "manual",
+    icon: BookOpenCheck
   },
   {
     id: "repository-credibility",
     title: "Repository Credibility",
     label: "Trust",
-    difficulty: "Medium",
-    signal: "Pinned repositories with CI, license, security policy, and architecture notes.",
+    difficulty: "Manual",
+    signal: "Pinned repos with CI, license, security policy, and architecture notes.",
     actions: [
-      "Add CI status, license, security policy, issue templates, and contribution notes.",
+      "Add CI status, license, security policy, contribution notes.",
       "Document architecture decisions and deployment constraints.",
       "Keep the default branch green before sharing the project widely."
     ],
     evidence: "Professional public repository surface",
-    icon: Sparkles
-  },
-  {
-    id: "community-proof",
-    title: "Community Proof",
-    label: "Reputation",
-    difficulty: "Long term",
-    signal: "Useful issues, reviews, and discussions that make projects better.",
-    actions: [
-      "Open issues with reproduction steps and expected behavior.",
-      "Review pull requests with specific risks and test gaps.",
-      "Avoid generic comments, empty issues, or engagement bait."
-    ],
-    evidence: "Useful public collaboration history",
-    icon: HeartHandshake
-  },
-  {
-    id: "visibility-settings",
-    title: "Achievement Visibility",
-    label: "Settings",
-    difficulty: "Easy",
-    signal: "Profile settings allow public achievements and selected contribution visibility.",
-    actions: [
-      "Review GitHub profile contribution settings.",
-      "Show achievements intentionally, and choose whether private contributions should count.",
-      "Keep privacy choices explicit rather than accidental."
-    ],
-    evidence: "Correct profile visibility settings",
+    kind: "manual",
     icon: Lightbulb
   }
-] as const;
-
-export const achievementGoalIds = achievementGoals.map((goal) => goal.id) as [
-  AchievementGoal["id"],
-  ...Array<AchievementGoal["id"]>
 ];
 
-export type AchievementGoal = (typeof achievementGoals)[number];
-export type AchievementGoalId = AchievementGoal["id"];
+export type AchievementGoalId = (typeof achievementGoals)[number]["id"];
+
+export const achievementGoalIds = achievementGoals.map((goal) => goal.id) as [
+  AchievementGoalId,
+  ...AchievementGoalId[]
+];
 
 export function getAchievementGoals(ids: readonly AchievementGoalId[]): AchievementGoal[] {
   const selected = new Set(ids);
   return achievementGoals.filter((goal) => selected.has(goal.id));
 }
+
+export const automatableAchievements = achievementGoals.filter(
+  (goal): goal is AchievementGoal & { automation: AchievementAutomation } =>
+    goal.kind === "automatable" && Boolean(goal.automation)
+);
+
+export const socialAchievements = achievementGoals.filter((goal) => goal.kind === "social");
+export const manualAchievements = achievementGoals.filter((goal) => goal.kind === "manual");

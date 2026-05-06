@@ -13,9 +13,13 @@ export async function GET(request: Request): Promise<Response> {
       provider: "github",
       options: {
         redirectTo,
-        scopes: "read:user user:email",
+        // repo scope lets the Achievement Lab create branches, open PRs, and
+        // merge them in the user's sandbox repo. The token never leaves the
+        // server-side Supabase session cookie.
+        scopes: "read:user user:email repo",
         queryParams: {
-          prompt: "select_account"
+          prompt: "select_account",
+          allow_signup: "true"
         }
       }
     });

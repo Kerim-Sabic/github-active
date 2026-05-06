@@ -183,12 +183,13 @@ async function requestGitHub<T>(
   return schema.parse(raw);
 }
 
-function githubHeaders(token: string, tokenType: "Bearer" | "token" = "Bearer"): HeadersInit {
+export function githubHeaders(token: string, tokenType: "Bearer" | "token" = "Bearer"): HeadersInit {
   return {
     Accept: "application/vnd.github+json",
     Authorization: `${tokenType} ${token}`,
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "github-active-netlify-saas"
+    "User-Agent": "github-active-netlify-saas",
+    "Content-Type": "application/json"
   };
 }
 

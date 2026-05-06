@@ -4,7 +4,7 @@ export function Card({ className, children }: { className?: string; children: Re
   return (
     <section
       className={cn(
-        "rounded-lg border border-border bg-surface-raised/92 p-5 shadow-soft backdrop-blur transition-[border-color,background-color,box-shadow] duration-200",
+        "rounded-lg border border-border bg-surface-raised/85 p-5 backdrop-blur-[2px] transition-colors duration-150",
         className
       )}
     >
@@ -17,8 +17,10 @@ export function CardHeader({ title, eyebrow, action }: { title: string; eyebrow?
   return (
     <div className="mb-4 flex items-start justify-between gap-4">
       <div>
-        {eyebrow ? <p className="mb-1 text-xs font-medium uppercase text-tertiary">{eyebrow}</p> : null}
-        <h2 className="text-lg font-semibold text-primary">{title}</h2>
+        {eyebrow ? (
+          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-tertiary">{eyebrow}</p>
+        ) : null}
+        <h2 className="text-base font-semibold text-primary">{title}</h2>
       </div>
       {action}
     </div>

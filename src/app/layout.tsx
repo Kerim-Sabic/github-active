@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ActivityBackdrop } from "@/shared/ui/activity-backdrop";
 import "./globals.css";
 
 const geist = Geist({
@@ -15,15 +16,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GitHub Active - GitHub developer journal automation",
-  description: "Transparent Netlify-hosted developer journal automation for user-owned GitHub repositories.",
-  metadataBase: new URL("https://github.com/Kerim-Sabic/github-active")
+  title: "GitHub Active — earn GitHub achievements in one click",
+  description:
+    "Sign in with GitHub and let GitHub Active run a sandbox repo on your behalf to earn Pull Shark, YOLO, Quickdraw, and Pair Extraordinaire achievements automatically.",
+  metadataBase: new URL("https://githubactive.netlify.app"),
+  openGraph: {
+    title: "GitHub Active — earn GitHub achievements in one click",
+    description:
+      "Sign in with GitHub. Click a button. Watch real PRs ship into your sandbox repo and unlock GitHub achievements.",
+    type: "website"
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable} dark`}>
-      <body>{children}</body>
+      <body>
+        <ActivityBackdrop />
+        {children}
+      </body>
     </html>
   );
 }
