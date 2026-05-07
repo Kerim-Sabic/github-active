@@ -15,6 +15,9 @@ const ServerEnvSchema = z.object({
   SESSION_SECRET: z.string().min(32).optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
+  OPENAI_API_KEY_MAINTAINER: z.string().optional(),
+  OPENAI_MODEL: z.string().optional(),
+  OPENAI_MAINTAINER_DAILY_QUOTA: z.coerce.number().int().positive().optional(),
   NODE_ENV: z.string().optional()
 });
 
@@ -33,6 +36,9 @@ export const serverEnv = ServerEnvSchema.parse({
   SESSION_SECRET: process.env.SESSION_SECRET,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  OPENAI_API_KEY_MAINTAINER: process.env.OPENAI_API_KEY_MAINTAINER,
+  OPENAI_MODEL: process.env.OPENAI_MODEL,
+  OPENAI_MAINTAINER_DAILY_QUOTA: process.env.OPENAI_MAINTAINER_DAILY_QUOTA,
   NODE_ENV: process.env.NODE_ENV
 });
 

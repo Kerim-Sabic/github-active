@@ -15,6 +15,7 @@ type CoopStatus = {
   rowId?: string | null;
   matchedAt?: string | null;
   completedAt?: string | null;
+  selfRanAt?: string | null;
   you?: { login: string; avatarUrl: string | null };
   partner?: { login: string; avatarUrl: string | null } | null;
   message?: string;
@@ -238,7 +239,14 @@ export function CoopClient({
         ) : null}
 
         {status?.state === "completed" && status.partner ? (
-          <CompletedState partner={status.partner} onJoinAgain={join} busy={busy} />
+          <CompletedState
+            partner={status.partner}
+            onJoinAgain={join}
+            onRunMine={runPairCommit}
+            running={running}
+            busy={busy}
+            selfRan={Boolean(status.selfRanAt)}
+          />
         ) : null}
       </Card>
 
@@ -462,22 +470,37 @@ function MatchedState({
 function CompletedState({
   partner,
   onJoinAgain,
-  busy
+  onRunMine,
+  running,
+  busy,
+  selfRan
 }: {
   partner: { login: string; avatarUrl: string | null };
   onJoinAgain: () => void;
+  onRunMine: () => void;
+  running: boolean;
   busy: boolean;
+  selfRan: boolean;
 }) {
   return (
     <div className="grid gap-3 text-center">
       <span className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-success-muted bg-success-muted/40 text-success">
         <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
       </span>
-      <p className="text-[14px] font-semibold text-primary">Last pair completed with @{partner.login}</p>
+      <p className="text-[14px] font-semibold text-primary">Pair completed with @{partner.login}</p>
       <p className="mx-auto max-w-md text-[12px] leading-6 text-secondary">
         Both of you should be credited Pair Extraordinaire within 15 minutes.
+        {selfRan
+          ? " You also ran your own side, so both accounts have +1 PR each toward Pull Shark."
+          : " Click Run my side to ship a co-authored PR in your sandbox too — you both get +1 toward Pull Shark."}
       </p>
-      <Button onClick={onJoinAgain} loading={busy} size="sm" className="mx-auto">
+      {!selfRan ? (
+        <Button onClick={onRunMine} loading={running} disabled={busy} className="mx-auto">
+          <Play aria-hidden="true" className="h-3.5 w-3.5" />
+          Run my side too
+        </Button>
+      ) : null}
+      <Button onClick={onJoinAgain} loading={busy} variant="secondary" size="sm" className="mx-auto">
         Join queue again
       </Button>
     </div>

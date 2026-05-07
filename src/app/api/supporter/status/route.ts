@@ -43,16 +43,10 @@ export async function GET(): Promise<Response> {
 
   let supporter = userRow.starredAt !== null;
   let starredAt = userRow.starredAt;
-  const dismissed = userRow.supporterPromptDismissedAt;
 
-  // Rolling re-check: if dismissed within the last 10 minutes and we don't
-  // yet have a starredAt timestamp, ask GitHub once. This catches the case
-  // where the user clicked the prompt, starred on GitHub, then came back.
-  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-  const recentlyDismissed = dismissed && dismissed.getTime() > tenMinutesAgo;
-  const shouldRecheck = !supporter && recentlyDismissed;
-
-  if (shouldRecheck) {
+  // Always re-check with GitHub if we don't have a recorded star yet.
+  // GitHub is the source of truth — once it returns 204 we record it.
+  if (!supporter) {
     const freshlyStarred = await hasUserStarred(
       provider.token,
       PRIMARY_FEATURED_REPO.owner,
@@ -73,10 +67,9 @@ export async function GET(): Promise<Response> {
 
   return Response.json({
     supporter,
-    prompted: !supporter && !dismissed,
+    prompted: !supporter,
     persistent: true,
     starredAt: starredAt?.toISOString() ?? null,
-    dismissedAt: dismissed?.toISOString() ?? null,
     repo: {
       owner: PRIMARY_FEATURED_REPO.owner,
       name: PRIMARY_FEATURED_REPO.repo,

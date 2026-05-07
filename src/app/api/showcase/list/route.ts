@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getProviderToken } from "@/server/auth/provider-token";
 import { githubHeaders } from "@/server/github/client";
-import { FEATURED_REPOS } from "@/server/featured-repos";
+import { FEATURED_OWNERS, FEATURED_PER_OWNER, PRIMARY_FEATURED_REPO } from "@/server/featured-repos";
 import { listShowcase } from "@/server/db/showcase-repo";
 
 export const runtime = "nodejs";
@@ -16,8 +16,12 @@ const RepoMetaSchema = z.object({
   stargazers_count: z.number(),
   forks_count: z.number(),
   language: z.string().nullable().optional(),
+  fork: z.boolean().optional(),
+  archived: z.boolean().optional(),
   owner: z.object({ login: z.string(), avatar_url: z.string().nullable() })
 });
+
+const RepoListSchema = z.array(RepoMetaSchema);
 
 export type ShowcaseListResponse = {
   configured: boolean;
@@ -49,20 +53,47 @@ export async function GET(): Promise<Response> {
   // limit, but fine for a small static list).
   const token = provider?.token ?? null;
 
-  const featured = await Promise.all(
-    FEATURED_REPOS.map(async (entry) => {
-      const meta = await fetchRepoMeta(entry.owner, entry.repo, token);
-      return {
-        owner: entry.owner,
-        repo: entry.repo,
-        description: meta?.description ?? null,
-        stars: meta?.stargazers_count ?? 0,
-        avatarUrl: meta?.owner.avatar_url ?? null,
-        url: meta?.html_url ?? `https://github.com/${entry.owner}/${entry.repo}`,
-        pitch: entry.pitch
-      };
+  // Resolve the primary featured repo (always pinned first) plus any
+  // additional public repos owned by FEATURED_OWNERS, sorted by stars.
+  const ownerListings = await Promise.all(
+    FEATURED_OWNERS.map(async (owner) => {
+      const repos = await fetchOwnerRepos(owner, token);
+      return repos.slice(0, FEATURED_PER_OWNER + 4);
     })
   );
+
+  const allRepos = ownerListings.flat();
+
+  const primaryMeta =
+    allRepos.find(
+      (r) =>
+        r.owner.login.toLowerCase() === PRIMARY_FEATURED_REPO.owner.toLowerCase() &&
+        r.name.toLowerCase() === PRIMARY_FEATURED_REPO.repo.toLowerCase()
+    ) ?? (await fetchRepoMeta(PRIMARY_FEATURED_REPO.owner, PRIMARY_FEATURED_REPO.repo, token));
+
+  const featured: ReturnType<typeof toFeaturedEntry>[] = [];
+  const seen = new Set<string>();
+
+  if (primaryMeta) {
+    const entry = toFeaturedEntry(primaryMeta, PRIMARY_FEATURED_REPO.pitch);
+    featured.push(entry);
+    seen.add(`${entry.owner}/${entry.repo}`.toLowerCase());
+  }
+
+  const others = allRepos
+    .filter((r) => {
+      if (r.fork || r.archived) return false;
+      const key = `${r.owner.login}/${r.name}`.toLowerCase();
+      if (seen.has(key)) return false;
+      return true;
+    })
+    .sort((a, b) => b.stargazers_count - a.stargazers_count)
+    .slice(0, FEATURED_PER_OWNER - featured.length);
+
+  for (const meta of others) {
+    featured.push(toFeaturedEntry(meta));
+    seen.add(`${meta.owner.login}/${meta.name}`.toLowerCase());
+  }
 
   const rows = await listShowcase(60);
   const community = rows.map((row) => ({
@@ -84,16 +115,53 @@ export async function GET(): Promise<Response> {
 }
 
 async function fetchRepoMeta(owner: string, repo: string, token: string | null) {
-  const headers: HeadersInit = token
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders(token) });
+  if (!response.ok) return null;
+  const raw: unknown = await response.json();
+  const parsed = RepoMetaSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
+async function fetchOwnerRepos(owner: string, token: string | null): Promise<Array<z.infer<typeof RepoMetaSchema>>> {
+  const response = await fetch(
+    `https://api.github.com/users/${encodeURIComponent(owner)}/repos?per_page=100&type=owner&sort=updated`,
+    { headers: ghHeaders(token) }
+  );
+  if (!response.ok) return [];
+  const raw: unknown = await response.json();
+  const parsed = RepoListSchema.safeParse(raw);
+  return parsed.success ? parsed.data : [];
+}
+
+function ghHeaders(token: string | null): HeadersInit {
+  return token
     ? githubHeaders(token)
     : {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "github-active-netlify-saas"
       };
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
-  if (!response.ok) return null;
-  const raw: unknown = await response.json();
-  const parsed = RepoMetaSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+}
+
+function toFeaturedEntry(
+  meta: z.infer<typeof RepoMetaSchema>,
+  pitchOverride?: string
+): {
+  owner: string;
+  repo: string;
+  description: string | null;
+  stars: number;
+  avatarUrl: string | null;
+  url: string;
+  pitch: string;
+} {
+  return {
+    owner: meta.owner.login,
+    repo: meta.name,
+    description: meta.description,
+    stars: meta.stargazers_count,
+    avatarUrl: meta.owner.avatar_url,
+    url: meta.html_url,
+    pitch: pitchOverride ?? meta.description ?? `Open source by @${meta.owner.login}.`
+  };
 }

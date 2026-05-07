@@ -217,7 +217,8 @@ function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-6 text-[12px] text-secondary md:flex" aria-label="Primary">
           <a href="#features" className="transition-colors hover:text-primary">Features</a>
-          <a href="#achievements" className="transition-colors hover:text-primary">Achievements</a>
+          <Link href="/contribute" className="transition-colors hover:text-primary">Contribute</Link>
+          <Link href="/hunt" className="transition-colors hover:text-primary">Hunt</Link>
           <Link href="/coop" className="transition-colors hover:text-primary">Pair Board</Link>
           <Link href="/showcase" className="transition-colors hover:text-primary">Showcase</Link>
           <Link href="/dashboard" className="transition-colors hover:text-primary">Dashboard</Link>
@@ -271,10 +272,12 @@ function SiteFooter() {
           >
             Source
           </a>
+          <Link href="/contribute" className="transition-colors hover:text-secondary">Contribute</Link>
+          <Link href="/hunt" className="transition-colors hover:text-secondary">Hunt</Link>
           <Link href="/coop" className="transition-colors hover:text-secondary">Pair Board</Link>
           <Link href="/showcase" className="transition-colors hover:text-secondary">Showcase</Link>
+          <Link href="/settings" className="transition-colors hover:text-secondary">Settings</Link>
           <Link href="/manual" className="transition-colors hover:text-secondary">Manual mode</Link>
-          <Link href="/setup" className="transition-colors hover:text-secondary">Setup</Link>
           <a
             href="https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/customizing-your-profile/personalizing-your-profile#displaying-badges-on-your-profile"
             target="_blank"

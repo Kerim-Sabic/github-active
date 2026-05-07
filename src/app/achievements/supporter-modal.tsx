@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Github, Sparkles, Star, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 
-const LOCAL_DISMISS_KEY = "github-active:supporter-dismissed";
+const SESSION_DISMISS_KEY = "github-active:supporter-dismissed-session";
 
 type SupporterStatus = {
   supporter: boolean;
@@ -53,19 +53,21 @@ export function SupporterModal({ active, onSupporter }: {
     return () => clearInterval(interval);
   }, [active, status?.persistent, status?.supporter, fetchStatus]);
 
-  const localDismissed =
-    typeof window !== "undefined" && window.localStorage.getItem(LOCAL_DISMISS_KEY) === "1";
+  // Session-only dismissal: the modal returns next visit until the user
+  // actually stars. Once GitHub confirms the star, status.supporter flips
+  // true and the modal stops showing for good.
+  const sessionDismissed =
+    typeof window !== "undefined" && window.sessionStorage.getItem(SESSION_DISMISS_KEY) === "1";
 
   const shouldShow =
     active &&
     status !== null &&
-    status.prompted &&
     !status.supporter &&
-    (status.persistent || !localDismissed);
+    !sessionDismissed;
 
   const close = (markDismissed: boolean) => {
     if (markDismissed && typeof window !== "undefined") {
-      window.localStorage.setItem(LOCAL_DISMISS_KEY, "1");
+      window.sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
     }
     setStatus((current) => (current ? { ...current, prompted: false } : current));
   };

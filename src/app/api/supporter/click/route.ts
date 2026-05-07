@@ -44,14 +44,15 @@ export async function POST(request: Request): Promise<Response> {
     PRIMARY_FEATURED_REPO.repo
   );
 
-  await db
-    .update(users)
-    .set({
-      supporterPromptDismissedAt: sql`now()`,
-      starredAt: alreadyStarred ? sql`now()` : userRow.starredAt,
-      updatedAt: sql`now()`
-    })
-    .where(eq(users.id, userRow.id));
+  // Don't set supporterPromptDismissedAt here — the modal should keep
+  // returning until GitHub actually confirms the star. If the user clicks
+  // through but never finishes starring, the next visit re-prompts.
+  if (alreadyStarred) {
+    await db
+      .update(users)
+      .set({ starredAt: sql`now()`, updatedAt: sql`now()` })
+      .where(eq(users.id, userRow.id));
+  }
 
   return Response.json({
     ok: true,

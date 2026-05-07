@@ -44,6 +44,11 @@ export async function GET(): Promise<Response> {
     }
   }
 
+  const selfRanAt =
+    (status.state === "matched" || status.state === "completed") && status.row.selfRanAt
+      ? status.row.selfRanAt.toISOString()
+      : null;
+
   return Response.json({
     configured: true,
     state: status.state,
@@ -56,6 +61,7 @@ export async function GET(): Promise<Response> {
     queueAhead: status.state === "waiting" ? status.queueAhead : null,
     rowId: status.state !== "none" ? status.row.id : null,
     completedAt: status.state === "completed" ? status.row.completedAt?.toISOString() : null,
-    matchedAt: status.state === "matched" ? status.row.matchedAt?.toISOString() : null
+    matchedAt: status.state === "matched" ? status.row.matchedAt?.toISOString() : null,
+    selfRanAt
   });
 }

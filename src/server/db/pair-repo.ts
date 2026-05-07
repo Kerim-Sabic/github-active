@@ -150,6 +150,20 @@ export async function markPairCompleted(input: {
     );
 }
 
+export async function markSelfRan(userId: string): Promise<void> {
+  const db = getDatabase();
+  if (!db) return;
+  await db
+    .update(pairSignups)
+    .set({ selfRanAt: sql`now()`, updatedAt: sql`now()` })
+    .where(
+      and(
+        eq(pairSignups.userId, userId),
+        inArray(pairSignups.status, ["matched", "completed"])
+      )
+    );
+}
+
 export async function getActiveQueueDepth(): Promise<number> {
   const db = getDatabase();
   if (!db) return 0;

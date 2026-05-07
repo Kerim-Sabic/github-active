@@ -31,11 +31,20 @@ Sign in with GitHub. Click **Pull Shark**. The app creates branches, opens PRs, 
 ## What it does
 
 - **Achievement Lab** — one-click runners for **Pull Shark**, **YOLO**, **Quickdraw**, and **Pair Extraordinaire**. Real branches, real PRs, real merges. All confined to a `github-active-sandbox` repo so your real projects stay clean. Tier-aware: shows your current count, the next tier (1 / 2 / 16 / 128 / 1024), and progress in real time.
+- **Contribute Wizard (`/contribute`)** — finds curated `good-first-issue` PRs across the GitHub ecosystem in the languages you actually write. Pick one → an OpenAI reasoning model drafts a minimal patch with tests, you review the diff, the wizard forks the upstream repo and opens a real PR. Earns *real* Pull Shark from real merges.
+- **Galaxy Brain Hunter (`/hunt`)** — searches GitHub Discussions for low-answer questions in the languages you know. AI drafts a substantive starter answer with code references; you review, edit, post on GitHub. Maintainer marks accepted → Galaxy Brain unlocks legitimately.
 - **Pair Board (`/coop`)** — opt-in queue. The next signed-in user to join becomes your co-author. One click runs a mutual co-authored commit; both sides earn Pair Extraordinaire from the same commit.
-- **Showcase (`/showcase`)** — discover what other lab users are building. Each card has a "View on GitHub" link — star what you actually like. Featured-by-the-maker pin at the top for `Kerim-Sabic/github-active`.
+- **Showcase (`/showcase`)** — discover what other lab users are building. Each card has a "View on GitHub" link — star what you actually like. Featured-by-the-maker pin at the top for `Kerim-Sabic` repos.
 - **Pair invite link** — generate a `?pair=YOU` URL that pre-fills the partner field for whoever opens it. Shareable on Discord/Twitter.
-- **Honest social section** — Galaxy Brain, Starstruck, Heart-on-Sleeve, and Public Sponsor *can&apos;t* be automated. The lab says so out loud and links you to the legitimate path for each.
+- **Honest social section** — Starstruck, Heart-on-Sleeve, Public Sponsor — actually impossible to fake. The lab points you at the legitimate path for each.
 - **Profile polish** — opt-in `username/username` README writer for when you want a clean, structured profile landing page.
+
+### AI features — Bring Your Own Key
+
+The Contribute Wizard and Galaxy Brain Hunter use OpenAI's reasoning models. There are two ways to use them:
+
+- **Maintainer key (Kerim-Sabic only)**: when signed in as the maintainer, the app falls back to `OPENAI_API_KEY_MAINTAINER` set in Netlify env vars, with a default daily limit of 10 drafts.
+- **Bring Your Own Key (everyone else)**: open `/settings`, paste your own OpenAI API key. It's stored in your browser's localStorage only, sent on each request as the `X-OpenAI-Key` HTTPS header, and never written to the database. No daily limit — it's your key, your bill.
 
 ### Reliability
 

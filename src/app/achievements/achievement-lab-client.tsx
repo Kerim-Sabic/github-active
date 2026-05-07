@@ -231,6 +231,10 @@ export function AchievementLabClient({
 
       {pairFromUrl && authedLogin ? <PairInviteBanner login={pairFromUrl} /> : null}
 
+      {authedLogin && achievementStatus && hasUnearned(achievementStatus) ? (
+        <VisibilityCallout login={authedLogin} />
+      ) : null}
+
       {achievementStatus ? (
         <ProgressOverview
           status={achievementStatus}
@@ -342,6 +346,47 @@ function Stat({ label, value, ok }: { label: string; value: number | string; ok?
     <div className="rounded-md border border-border bg-surface px-3 py-2.5">
       <p className="text-[10px] uppercase tracking-[0.06em] text-tertiary">{label}</p>
       <p className={`mt-1 font-mono text-[15px] ${ok ? "text-success" : "text-primary"}`}>{value}</p>
+    </div>
+  );
+}
+
+function hasUnearned(status: AchievementStatus): boolean {
+  return (
+    status.tiers.pullShark.reached === null ||
+    !status.tiers.yolo ||
+    !status.tiers.quickdraw ||
+    !status.tiers.pair
+  );
+}
+
+function VisibilityCallout({ login }: { login: string }) {
+  return (
+    <div className="grid gap-3 rounded-lg border border-warning-muted bg-warning-muted/20 px-5 py-4 md:flex md:items-center md:justify-between">
+      <div className="flex items-start gap-3">
+        <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+        <div>
+          <p className="text-[13px] font-semibold text-primary">Don&apos;t see badges on your profile?</p>
+          <p className="mt-1 text-[12px] leading-6 text-secondary">
+            GitHub awards achievements within ~15 min, but only displays them when{" "}
+            <span className="font-medium text-primary">Display achievements on profile</span> is enabled in your settings.
+            Many people miss this.
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:gap-2">
+        <Button asChild size="sm" variant="secondary">
+          <a href="https://github.com/settings/profile" target="_blank" rel="noreferrer">
+            Open settings
+            <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+          </a>
+        </Button>
+        <Button asChild size="sm">
+          <a href={`https://github.com/${login}?tab=achievements`} target="_blank" rel="noreferrer">
+            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+            Check profile
+          </a>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -728,6 +773,15 @@ function RunConsole({
                   </a>
                 ) : null}
               </p>
+              <a
+                href="https://github.com/Kerim-Sabic/github-active"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex items-center gap-1.5 text-primary underline-offset-2 hover:underline"
+              >
+                <Star aria-hidden="true" className="h-3 w-3" />
+                If this helped, star github-active to support the project
+              </a>
             </div>
           </div>
         </div>

@@ -1,7 +1,4 @@
-import { eq, sql } from "drizzle-orm";
 import { getProviderToken } from "@/server/auth/provider-token";
-import { getDatabase } from "@/server/db/client";
-import { users } from "@/server/db/schema";
 import { ensureUserFromProvider } from "@/server/db/user-repo";
 
 export const runtime = "nodejs";
@@ -23,19 +20,15 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "not signed in", reason: "reauth_required" }, { status: 401 });
   }
 
+  // Skip is intentionally session-only. We do NOT persist a "never show
+  // again" flag — the modal will return on the user's next visit, until
+  // they actually star the maker repo. Once they star, the supporter
+  // status flips and the modal stops showing forever.
+  //
+  // The user is never blocked: dismiss closes the modal for the current
+  // session via localStorage on the client.
   const userRow = await ensureUserFromProvider(provider);
-  if (!userRow) return Response.json({ ok: true, persistent: false });
+  void userRow;
 
-  const db = getDatabase();
-  if (!db) return Response.json({ ok: true, persistent: false });
-
-  await db
-    .update(users)
-    .set({
-      supporterPromptDismissedAt: sql`now()`,
-      updatedAt: sql`now()`
-    })
-    .where(eq(users.id, userRow.id));
-
-  return Response.json({ ok: true, persistent: true });
+  return Response.json({ ok: true, persistent: false });
 }

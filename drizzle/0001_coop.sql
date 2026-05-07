@@ -16,9 +16,13 @@ CREATE TABLE IF NOT EXISTS pair_signups (
   matched_with_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
   matched_at timestamptz,
   completed_at timestamptz,
+  self_ran_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Idempotent: tolerate older 0001 migrations that didn't have self_ran_at.
+ALTER TABLE pair_signups ADD COLUMN IF NOT EXISTS self_ran_at timestamptz;
 
 CREATE INDEX IF NOT EXISTS pair_signups_status_idx ON pair_signups(status);
 CREATE INDEX IF NOT EXISTS pair_signups_user_id_idx ON pair_signups(user_id);

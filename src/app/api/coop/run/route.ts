@@ -1,6 +1,9 @@
+import { eq } from "drizzle-orm";
 import { getProviderToken } from "@/server/auth/provider-token";
 import { ensureUserFromProvider } from "@/server/db/user-repo";
-import { getPairStatusForUser, markPairCompleted } from "@/server/db/pair-repo";
+import { getPairStatusForUser, markPairCompleted, markSelfRan } from "@/server/db/pair-repo";
+import { getDatabase } from "@/server/db/client";
+import { users as usersTable } from "@/server/db/schema";
 import {
   GitHubMutationError,
   createBranch,
@@ -11,6 +14,7 @@ import {
   putFile
 } from "@/server/github/mutations";
 import { ensureSandboxRepo } from "@/server/github/sandbox";
+import { generateRealisticEntry } from "@/server/automation/realistic-content";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,12 +43,44 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const status = await getPairStatusForUser(userRow.id);
-  if (status.state !== "matched") {
-    return Response.json({ error: "not matched", state: status.state }, { status: 409 });
+  if (status.state !== "matched" && status.state !== "completed") {
+    return Response.json({ error: "not paired", state: status.state }, { status: 409 });
   }
 
-  const partnerLogin = status.partner.githubLogin;
-  const partnerUserId = status.partner.userId;
+  let partnerLogin: string;
+  let partnerUserId: string;
+  let partnerAvatarUrl: string | null = null;
+
+  if (status.state === "matched") {
+    partnerLogin = status.partner.githubLogin;
+    partnerUserId = status.partner.userId;
+    partnerAvatarUrl = status.partner.avatarUrl ?? null;
+  } else {
+    // Completed pair — let the non-clicker run their own side for mutual
+    // Pull Shark credit. Look up the partner from the user's own row.
+    if (!status.row.matchedWithUserId) {
+      return Response.json({ error: "no partner recorded" }, { status: 409 });
+    }
+    if (status.row.selfRanAt) {
+      return Response.json({ error: "already ran your side", state: "self-ran" }, { status: 409 });
+    }
+    const db = getDatabase();
+    if (!db) {
+      return Response.json({ error: "database not configured", reason: "db_unavailable" }, { status: 503 });
+    }
+    const partnerRows = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, status.row.matchedWithUserId))
+      .limit(1);
+    const partnerUser = partnerRows[0];
+    if (!partnerUser) {
+      return Response.json({ error: "partner user not found" }, { status: 404 });
+    }
+    partnerLogin = partnerUser.login;
+    partnerUserId = partnerUser.id;
+    partnerAvatarUrl = partnerUser.avatarUrl ?? null;
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -74,27 +110,34 @@ export async function POST(request: Request): Promise<Response> {
         const baseSha = await getBranchSha(provider.token, sandbox.owner, sandbox.repo, sandbox.defaultBranch);
         const ts = Date.now();
         const suffix = Math.random().toString(36).slice(2, 8);
-        const branch = `bot/coop-${ts}-${suffix}`;
-        const filePath = `entries/coop-${ts}-${suffix}.md`;
+        const entry = generateRealisticEntry({
+          ts,
+          index: 1,
+          total: 1,
+          kind: "pair-extraordinaire",
+          randomSuffix: suffix,
+          partnerLogin: partner.login
+        });
+        const branch = `pair/${entry.path.split("/").slice(-1)[0]?.replace(/\.[^.]+$/, "") ?? `coop-${ts}`}-${Math.random().toString(36).slice(2, 8)}`;
 
         send("step", { phase: "branch", message: `branch ${branch}` });
         await createBranch(provider.token, sandbox.owner, sandbox.repo, branch, baseSha);
 
         const commitMessage = [
-          `feat: pair commit with @${partner.login}`,
+          entry.message,
           "",
           `Co-authored-by: ${partnerName} <${partnerEmail}>`
         ].join("\n");
 
         const authorEmail = provider.email ?? `${provider.login}@users.noreply.github.com`;
-        send("step", { phase: "commit", message: `commit ${filePath} with co-author trailer` });
+        send("step", { phase: "commit", message: `commit ${entry.path} with co-author trailer` });
         await putFile({
           token: provider.token,
           owner: sandbox.owner,
           repo: sandbox.repo,
           branch,
-          path: filePath,
-          content: buildCoopEntry(provider.login, partner.login),
+          path: entry.path,
+          content: entry.content,
           message: commitMessage,
           authorName: provider.login,
           authorEmail
@@ -107,8 +150,8 @@ export async function POST(request: Request): Promise<Response> {
           repo: sandbox.repo,
           head: branch,
           base: sandbox.defaultBranch,
-          title: `Pair Board: @${provider.login} × @${partner.login}`,
-          body: `Mutual Pair Extraordinaire run from the github-active /coop queue. Both authors should earn the badge.`
+          title: `${entry.prTitle} (with @${partner.login})`,
+          body: entry.prBody
         });
         send("step", { phase: "pr-opened", message: `pr #${pr.number} opened`, number: pr.number, url: pr.html_url });
 
@@ -122,11 +165,27 @@ export async function POST(request: Request): Promise<Response> {
         });
         send("step", { phase: "merged", message: `pr #${pr.number} merged`, number: pr.number, url: pr.html_url });
 
-        await markPairCompleted({ userId: userRow.id, partnerUserId });
-        send("done", {
-          message: "complete — both accounts should be credited within 15 minutes",
-          profileUrl: `https://github.com/${provider.login}?tab=achievements`
-        });
+        if (status.state === "matched") {
+          // First side runs the canonical pair commit; both sides earn Pair
+          // Extraordinaire from the trailer, the clicker also gets a +1 PR
+          // for Pull Shark.
+          await markPairCompleted({ userId: userRow.id, partnerUserId });
+          send("done", {
+            message: "complete — partner can now click Run my side for their own Pull Shark +1",
+            profileUrl: `https://github.com/${provider.login}?tab=achievements`
+          });
+        } else {
+          // Non-clicker's side: a separate co-authored PR in their sandbox so
+          // they get a +1 PR for Pull Shark too.
+          await markSelfRan(userRow.id);
+          send("done", {
+            message: "complete — your side merged, both accounts now have +1 PR each",
+            profileUrl: `https://github.com/${provider.login}?tab=achievements`
+          });
+        }
+        // Suppress the unused-variable lint for partnerAvatarUrl when realtime
+        // payloads start consuming it — keeps the lookup branch tidy.
+        void partnerAvatarUrl;
       } catch (error) {
         if (error instanceof GitHubMutationError) {
           send("error", { status: error.status, retryAfterSeconds: error.retryAfterSeconds, message: error.message });
@@ -148,14 +207,3 @@ export async function POST(request: Request): Promise<Response> {
   });
 }
 
-function buildCoopEntry(actor: string, partner: string): string {
-  return [
-    `# Pair Board entry — @${actor} × @${partner}`,
-    "",
-    `- timestamp: ${new Date().toISOString()}`,
-    "- via: github-active /coop queue",
-    "",
-    "Mutual Pair Extraordinaire commit. Both accounts should be credited.",
-    ""
-  ].join("\n");
-}

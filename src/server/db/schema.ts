@@ -132,6 +132,7 @@ export const pairSignups = pgTable(
     matchedWithUserId: uuid("matched_with_user_id").references(() => users.id, { onDelete: "set null" }),
     matchedAt: timestamp("matched_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    selfRanAt: timestamp("self_ran_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
   },
@@ -162,9 +163,60 @@ export const repoShowcase = pgTable(
   ]
 );
 
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    feature: text("feature").notNull(),
+    keySource: text("key_source").notNull(),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").default(0).notNull(),
+    outputTokens: integer("output_tokens").default(0).notNull(),
+    reasoningTokens: integer("reasoning_tokens").default(0).notNull(),
+    bucketDay: text("bucket_day").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index("ai_usage_user_day_idx").on(table.userId, table.bucketDay)]
+);
+
+export type DraftFileChange = {
+  path: string;
+  newContent: string;
+  reason?: string;
+};
+
+export type ContributionDraftPayload = {
+  summary: string;
+  filesToChange: DraftFileChange[];
+  commitMessage: string;
+  prTitle: string;
+  prBody: string;
+  baseBranch: string;
+  baseSha: string;
+  reasoning?: string;
+};
+
+export const contributionDrafts = pgTable(
+  "contribution_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    upstreamOwner: text("upstream_owner").notNull(),
+    upstreamRepo: text("upstream_repo").notNull(),
+    issueNumber: integer("issue_number").notNull(),
+    draft: jsonb("draft").$type<ContributionDraftPayload>().notNull(),
+    submittedPrUrl: text("submitted_pr_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index("contribution_drafts_user_idx").on(table.userId)]
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type RepositoryRow = typeof repositories.$inferSelect;
 export type AutomationScheduleRow = typeof automationSchedules.$inferSelect;
 export type PlannedCommitRow = typeof plannedCommits.$inferSelect;
 export type PairSignupRow = typeof pairSignups.$inferSelect;
 export type RepoShowcaseRow = typeof repoShowcase.$inferSelect;
+export type AiUsageRow = typeof aiUsage.$inferSelect;
+export type ContributionDraftRow = typeof contributionDrafts.$inferSelect;
